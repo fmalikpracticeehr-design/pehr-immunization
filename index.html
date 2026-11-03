@@ -405,6 +405,13 @@
   .empty svg { color: #9ca3af; }
   .panel[hidden] { display: none; }
 
+  .cpt-confirm { position:fixed; inset:0; z-index:90; display:grid; place-items:center; padding:18px; background:rgba(17,24,39,.38); }
+  .cpt-confirm[hidden] { display:none !important; }
+  .cpt-confirm__box { width:min(440px,100%); padding:20px; border:1px solid var(--line-soft); border-radius:8px; background:#fff; box-shadow:0 16px 48px rgba(17,24,39,.24); }
+  .cpt-confirm__box h3 { margin:0 0 10px; font-size:13.5px; font-weight:600; color:var(--ink); }
+  .cpt-confirm__box p { margin:0; color:var(--label); font-size:10.5px; line-height:1.55; }
+  .cpt-confirm__actions { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+
   /* Toast */
   .toast { position: fixed; left: 50%; bottom: 28px; z-index: 60; transform: translate(-50%, 10px); background: #111827; color: #fff; font-size: 12px; padding: 9px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -861,6 +868,7 @@
   </footer>
 </section>
 
+<div class="cpt-confirm" id="cpt-confirm" hidden><section class="cpt-confirm__box" role="alertdialog" aria-modal="true" aria-labelledby="cpt-confirm-title" aria-describedby="cpt-confirm-message"><h3 id="cpt-confirm-title">Confirm Save</h3><p id="cpt-confirm-message">There is no encounter form to put CPT code <strong id="confirm-cpt-code"></strong> in. Are you sure you want to save?</p><div class="cpt-confirm__actions"><button class="pill outline" type="button" id="cpt-confirm-no">No</button><button class="pill" type="button" id="cpt-confirm-yes">Yes</button></div></section></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -912,6 +920,7 @@
   var imm = $('#imm'), scrim = $('#scrim'), body = $('#imm-body'), form = $('#imm-form');
   var records = { scheduled: [], history: [] };
   var activeTab = 'scheduled';
+  var pendingCloseAfterConfirm = false;
   var selected = null;
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -959,7 +968,7 @@
   $$('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && imm.classList.contains('show')) {
-      if ($('#ta-list').classList.contains('show')) closeTypeahead(); else closeModal();
+      if ($('#cpt-confirm') && !$('#cpt-confirm').hidden) closeCptConfirm(); else if ($('#ta-list').classList.contains('show')) closeTypeahead(); else closeModal();
     }
   });
 
@@ -1127,10 +1136,30 @@
   $('#t-scheduled').addEventListener('click', function () { setTab('scheduled'); });
   $('#t-history').addEventListener('click', function () { setTab('history'); });
 
-  function addRecord() {
-    if (!validate()) { toast('Fill in the required fields'); return false; }
-    var cptCode = $('#f-cpt').value.trim();
-    if (form.mode.value==='new' && cptCode && !window.confirm('There is no encounter form to put CPT code ' + cptCode + ' in. Are you sure you want to save?')) return false;
+  function closeCptConfirm() { $('#cpt-confirm').hidden=true; }
+  function requestSave(closeAfter) {
+    if (!validate()) { toast('Fill in the required fields'); return; }
+    var cptCode=$('#f-cpt').value.trim();
+    if (form.mode.value==='new' && cptCode) {
+      pendingCloseAfterConfirm=closeAfter;
+      $('#confirm-cpt-code').textContent=cptCode;
+      $('#cpt-confirm').hidden=false;
+      $('#cpt-confirm-no').focus();
+      return;
+    }
+    var saved=addRecord(true);
+    if(saved && closeAfter) closeModal();
+  }
+  $('#cpt-confirm-no').addEventListener('click',closeCptConfirm);
+  $('#cpt-confirm-yes').addEventListener('click',function(){
+    var closeAfter=pendingCloseAfterConfirm;
+    closeCptConfirm();
+    var saved=addRecord(true);
+    if(saved && closeAfter) closeModal();
+  });
+
+  function addRecord(skipValidation) {
+    if (!skipValidation && !validate()) { toast('Fill in the required fields'); return false; }
     var mode = form.mode.value, fc = $('#f-financial').value, cm = $('#f-comments').value.trim();
     var base = { name: form.mode.value==='schedule'?$('#f-schedule-set').value:vac.value.trim(), vis: $('#f-vis-version').value, fc: fc, comments: mode==='historical'?[$('#f-source').value,cm].filter(Boolean).join(' — '):cm, by: CURRENT_USER, entry: today() };
     if (mode === 'schedule') {
@@ -1167,8 +1196,8 @@
   $$('[data-act]').forEach(function (b) {
     b.addEventListener('click', function () {
       var act = b.dataset.act;
-      if (act === 'add') addRecord();
-      else if (act === 'add-close') { if (addRecord()) closeModal(); }
+      if (act === 'add') requestSave(false);
+      else if (act === 'add-close') requestSave(true);
       else if (act === 'reset') { resetForm(false); body.scrollTo({ top: 0, behavior: 'smooth' }); toast('Form cleared'); }
       else if (act === 'delete') {
         if (!selected || selected.tab !== activeTab) { toast('Select a row to delete'); return; }
