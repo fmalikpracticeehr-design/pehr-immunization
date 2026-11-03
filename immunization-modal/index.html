@@ -1,0 +1,1100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Immunization · Practice EHR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="PEHR-8867 — Immunization pop-up prototype on the Patient Chart.">
+<link rel="icon" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  /* Measurements are taken from the PEHR-8867 design screenshots (1440px-wide screen). */
+  :root {
+    --blue: #2f6bff;
+    --blue-hover: #1f5ae8;
+    --blue-tint: #e9f0ff;
+    --ink: #111827;
+    --label: #374151;
+    --muted: #6b7280;
+    --placeholder: #9ca3af;
+    --line: #d9dde3;
+    --line-soft: #e5e7eb;
+    --disabled: #f3f4f6;
+    --head-bg: #f9fafb;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #f9fafb; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  body.modal-open { overflow: hidden; }
+
+  /* ── Starting screen: Patient Chart ─────────────────────────────────
+     Rebuilt from the QA New UI screen recording (1918px video at 125% scaling → 1534 CSS px wide).
+     Every size below is a measured CSS-px value from that recording. */
+  html, body { background: #fff; }
+  /* The px values in this file were measured on a 1534px layout; QA renders the same layout 1.25×
+     larger at 100% browser zoom (1918px wide), so the whole page is scaled to match. */
+  html { zoom: 1.25; }
+  .pc [hidden] { display: none !important; }
+  .pc { --c-blue: #2563eb; --c-text: #1f2937; --c-sub: #6b7280; --c-line: #e5e7eb; --c-soft: #f9fafb; font-size: 11px; color: var(--c-text); }
+  .pc .fa-solid, .pc .fa-regular { line-height: 1; }
+
+  /* Fixed top: 73px grey band + 34px nav row */
+  .pc-top { position: fixed; z-index: 30; top: 0; left: 0; right: 0; height: 73px; background: #f1f2f4; }
+  .pc-logo { position: absolute; left: 3px; top: 19px; width: 124px; height: 29px; object-fit: contain; object-position: left center; }
+  .pc-patient { position: absolute; left: 228px; top: 2px; width: 195px; height: 62px; background: #fff; border: 1px solid var(--c-line); border-radius: 6px; padding: 7px 0 0 15px; display: flex; gap: 8px; }
+  .pc-avatar { position: relative; flex: 0 0 36px; height: 36px; border-radius: 50%; background: #e5e7eb; display: grid; place-items: center; color: #9ca3af; font-size: 17px; }
+  .pc-avatar .flag { position: absolute; right: -2px; bottom: -3px; width: 12px; height: 12px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 8px; color: var(--c-blue); }
+  .pc-pname { display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; color: #111827; white-space: nowrap; margin-top: 2px; }
+  .pc-pname .dot { width: 9px; height: 9px; border-radius: 50%; background: #dc2626; flex: none; }
+  .pc-tag { display: inline-block; margin-top: 4px; height: 16px; padding: 0 7px; border-radius: 8px; background: #dbeafe; color: var(--c-blue); font-size: 9px; font-weight: 500; line-height: 16px; }
+  .pc-pmeta { font-size: 9.5px; color: #374151; margin-top: 3px; white-space: nowrap; }
+  .pc-pmeta b { font-weight: 700; }
+  .pc-user { position: absolute; right: 11px; top: 13px; display: flex; align-items: center; gap: 9px; }
+  .pc-user .fa-bell { font-size: 12px; color: #111827; }
+  .pc-av { width: 26px; height: 26px; border-radius: 50%; background: #f59e0b; color: #fff; font-size: 10px; font-weight: 600; display: grid; place-items: center; }
+  .pc-loc { position: absolute; right: 4px; top: 51px; display: flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 700; color: #111827; }
+  .pc-loc .fa-location-dot { font-size: 14px; color: var(--c-blue); }
+
+  .pc-nav { position: fixed; z-index: 30; top: 73px; left: 0; right: 0; height: 34px; background: #fff; border-bottom: 1px solid var(--c-line); display: flex; align-items: center; padding-left: 15px; }
+  .pc-menu { display: flex; align-items: center; gap: 20px; }
+  .pc-menu a { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #374151; text-decoration: none; white-space: nowrap; }
+  .pc-menu a i { font-size: 12px; color: #1f2937; }
+  .pc-menu a.on, .pc-menu a.on i { color: var(--c-blue); }
+  .pc-navr { margin-left: auto; display: flex; align-items: center; height: 100%; }
+  .pc-switch { width: 108px; height: 21px; padding: 0 9px 0 11px; border: 1px solid var(--c-line); border-radius: 11px; background: #f3f4f6; font-size: 10.5px; color: #111827; display: inline-flex; align-items: center; justify-content: space-between; }
+  .pc-switch i, .pc-org i.fa-chevron-down { font-size: 8px; color: #6b7280; }
+  .pc-org { width: 53px; margin-left: 10px; display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; color: #111827; }
+  .pc-org .dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; }
+  .pc-org i.fa-chevron-down { margin-left: auto; }
+  .pc-ai { width: 13px; margin-left: 33px; font-size: 13px; color: #8b5cf6; }
+  .pc-addp { width: 14px; margin-left: 7px; font-size: 13px; color: var(--c-blue); }
+  .pc-qs { margin-left: 8px; width: 159px; height: 24px; border: 1px solid var(--c-line); border-radius: 12px 0 0 12px; border-right: 0; display: flex; align-items: center; gap: 6px; padding: 0 9px; font-size: 9.5px; color: #9ca3af; background: #fff; }
+  .pc-qs .fa-sliders { margin-left: auto; color: #6b7280; }
+
+  /* Fixed sub-bar (y 107–148) */
+  .pc-sub { position: fixed; z-index: 29; top: 108px; left: 0; right: 0; height: 40px; background: #fff; display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-right: 7px; }
+  .pc-pill { height: 20px; padding: 0 6px; border: 1px solid var(--c-blue); border-radius: 10px; background: #fff; color: var(--c-blue); font: 400 9px/18px 'Inter', sans-serif; white-space: nowrap; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .pc-pill:hover { background: #eff6ff; }
+  .pc-pill .fa-plus { font-size: 10px; }
+  .pc-ico { font-size: 14px; color: var(--c-blue); }
+  .pc-sub .pc-ico:first-of-type { margin-left: 4px; }
+
+  /* Fixed left rail + pull-tabs */
+  .pc-rail { position: fixed; z-index: 28; top: 108px; bottom: 20px; left: 0; width: 44px; background: #fff; }
+  .pc-rail i { position: absolute; left: 0; width: 37px; text-align: center; font-size: 14px; color: #111827; }
+  .pc-rail .on { position: absolute; left: 5px; width: 28px; height: 32px; border-radius: 6px; background: #dbeafe; }
+  .pc-rail i.blue { color: var(--c-blue); }
+  .pc-strip { position: fixed; z-index: 28; top: 108px; bottom: 20px; left: 46px; width: 5px; background: #dbeafe; }
+  .pc-tab { position: fixed; z-index: 28; left: 51px; width: 16px; border-radius: 0 5px 5px 0; writing-mode: vertical-rl; transform: rotate(180deg); display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 9.5px; font-weight: 600; }
+  .pc-tab.flow { top: 137px; height: 80px; background: #dbeafe; color: #3b82f6; }
+  .pc-tab.ai { top: 228px; height: 122px; background: #8b5cf6; color: #fff; }
+  .pc-tab i { font-size: 8px; transform: rotate(90deg); }
+
+  /* Fixed footer */
+  .pc-foot { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; height: 20px; background: #f3f4f6; border-top: 1px solid var(--c-line); display: flex; align-items: center; padding: 0 8px; font-size: 8px; color: #6b7280; }
+  .pc-foot .clock { position: absolute; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 5px; color: #374151; }
+  .pc-foot .links { margin-left: auto; display: flex; gap: 6px; color: #374151; }
+  .pc-chat { position: fixed; z-index: 31; right: 26px; bottom: 38px; width: 39px; height: 39px; border-radius: 50%; background: var(--c-blue); color: #fff; display: grid; place-items: center; font-size: 17px; box-shadow: 0 2px 8px rgba(37, 99, 235, .35); }
+
+  /* Scrolling content area (below the sub-bar, above the footer) */
+  .pc-scroll { position: fixed; top: 148px; left: 0; right: 0; bottom: 20px; overflow-y: auto; padding: 14px 15px 16px 85px; }
+  .pc-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .pc-ov { height: 56px; background: var(--c-soft); border: 1px solid var(--c-line); border-radius: 8px; display: flex; align-items: center; gap: 9px; padding: 0 8px; min-width: 0; }
+  .pc-ov .ic { flex: 0 0 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; }
+  .pc-ov small { display: block; font-size: 7.5px; color: var(--c-sub); }
+  .pc-ov strong { display: block; font-size: 10.5px; font-weight: 600; color: #111827; line-height: 1.2; }
+  .pc-ov span { display: block; font-size: 7.5px; color: var(--c-sub); }
+  .pc-ov .clip { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  .pc-card { background: #fff; border: 1px solid var(--c-line); border-radius: 8px; padding: 0 10px; position: relative; }
+  .pc-head { height: 44px; display: flex; align-items: center; gap: 7px; }
+  .pc-head h3 { margin: 0; font-size: 13px; font-weight: 600; color: #1f2937; }
+  .pc-head > i { font-size: 13px; color: var(--c-blue); }
+  .pc-head .r { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  .pc-visit { margin-top: 21px; height: 457px; padding: 0 13px 0 11px; }
+  .pc-vtools { display: flex; align-items: center; height: 20px; margin-top: -5px; }
+  .pc-input { height: 20px; border: 1px solid var(--c-line); border-radius: 6px; background: #fff; display: flex; align-items: center; gap: 6px; padding: 0 8px; font-size: 9.5px; color: #9ca3af; }
+  .pc-input .fa-chevron-down { margin-left: auto; font-size: 8px; color: #6b7280; }
+  .pc-input b { font-weight: 500; color: #111827; text-transform: uppercase; }
+  .pc-vlist { margin-top: 23px; height: 354px; overflow-y: auto; border: 1px solid var(--c-line); border-radius: 6px; scrollbar-width: thin; }
+  .pc-vrow { height: 73px; display: flex; align-items: center; padding: 0 14px 0 12px; border-bottom: 1px solid var(--c-line); }
+  .pc-vicon { flex: 0 0 46px; height: 46px; border-radius: 6px; background: #dbeafe; display: grid; place-items: center; color: var(--c-blue); font-size: 17px; }
+  .pc-vbody { margin-left: 12px; align-self: flex-start; padding-top: 10px; }
+  .pc-vtitle { font-size: 11px; font-weight: 500; color: var(--c-blue); text-transform: uppercase; }
+  .pc-vsub { font-size: 9.5px; color: #4b5563; margin-top: 3px; }
+  .pc-chips { display: flex; gap: 10px; margin-top: 6px; }
+  .pc-chip { height: 13px; padding: 0 5px; border-radius: 3px; background: #dbeafe; color: #1e40af; font-size: 8.5px; line-height: 13px; font-weight: 500; }
+  .pc-chip.red { background: #fee2e2; color: #dc2626; }
+  .pc-status { margin-left: auto; align-self: flex-start; margin-top: 14px; height: 12px; padding: 0 6px; border-radius: 6px; background: #dcfce7; color: #15803d; font-size: 8px; font-weight: 700; line-height: 12px; white-space: nowrap; }
+
+  .pc-cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 45px; margin-top: 15px; align-items: start; }
+  .pc-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .pc-col.r { gap: 16px; }
+  .pc-col > .pc-card { padding: 0 16px 0 9px; }
+  .pc-col.r > .pc-card { padding: 0 14px 0 10px; }
+
+  /* Inner boxes (Latest Vitals, Active Problems, Allergies, …) */
+  .pc-box { border: 1px solid var(--c-line); border-radius: 6px; overflow: hidden; }
+  .pc-bhead { height: 30px; background: var(--c-soft); border-bottom: 1px solid var(--c-line); display: flex; align-items: center; gap: 7px; padding: 0 8px; font-size: 12px; font-weight: 600; color: #1f2937; }
+  .pc-bhead.t32 { height: 32px; } .pc-bhead.t38 { height: 38px; } .pc-bhead.t31 { height: 31px; }
+  .pc-bhead .r { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .pc-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 10px; color: #374151; }
+  .pc-empty i { font-size: 16px; color: #9ca3af; }
+
+  /* To Do */
+  .pc-todo { height: 263px; }
+  .pc-todo-body { display: grid; grid-template-columns: 220px 1fr; column-gap: 31px; margin-top: -7px; }
+  .pc-filters { display: flex; flex-direction: column; gap: 6px; }
+  .pc-filter { height: 30px; border-radius: 4px; background: #f5f7fa; display: flex; align-items: center; gap: 7px; padding: 0 8px; font-size: 9.5px; color: #3b5bdb; }
+  .pc-filter.on { background: #e8f0fe; }
+  .pc-filter i { width: 12px; font-size: 10px; color: var(--c-blue); }
+  .pc-filter .n { margin-left: auto; min-width: 18px; height: 18px; border-radius: 9px; background: #dcfce7; color: #16a34a; font-size: 9px; font-weight: 600; display: grid; place-items: center; }
+  .pc-tasks { height: 208px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 8px; scrollbar-width: thin; }
+  .pc-task { flex: none; min-height: 32px; background: var(--c-soft); border: 1px solid var(--c-line); border-radius: 4px; padding: 7px 7px; font-size: 9.5px; color: #2563eb; display: flex; gap: 8px; line-height: 1.3; }
+  .pc-task.tall { min-height: 41px; }
+  .pc-task .pri { margin-left: auto; font-size: 9px; font-weight: 600; color: #16a34a; }
+
+  /* Insurance & Financial */
+  .pc-ins { height: 345px; }
+  .pc-ins .pc-head { height: 37px; padding-top: 0; }
+  .pc-insbox { border: 1px solid var(--c-line); border-radius: 6px; padding: 10px 17px 0 10px; position: relative; margin-right: 19px; }
+  .pc-fin { margin-left: 2px; }
+  .pc-insbox + .pc-insbox { margin-top: 15px; }
+  .pc-insbox h4 { margin: 0; font-size: 11.5px; font-weight: 600; color: #1f2937; }
+  .pc-active { position: absolute; right: 17px; top: 11px; height: 14px; padding: 0 6px; border-radius: 7px; background: #dcfce7; color: #16a34a; font-size: 9px; font-weight: 600; line-height: 14px; }
+  .pc-kv { display: grid; grid-template-columns: 307px 1fr; row-gap: 7px; margin-top: 12px; }
+  .pc-kv div { font-size: 8px; color: #6b7280; white-space: nowrap; }
+  .pc-kv b { font-size: 10px; font-weight: 600; color: #1f2937; margin-left: 3px; }
+  .pc-fin { display: grid; grid-template-columns: repeat(3, 176px); column-gap: 28px; margin-top: 10px; }
+  .pc-fin div { height: 40px; background: var(--c-soft); border: 1px solid var(--c-line); border-radius: 4px; padding: 6px 6px 0; font-size: 8px; color: #374151; }
+  .pc-fin b { display: block; font-size: 10px; font-weight: 600; color: #1f2937; margin-top: 3px; }
+  .pc-fin .split { display: grid; grid-template-columns: 1fr auto; font-size: 8px; line-height: 10px; }
+  .pc-fin .split b { display: inline; margin: 0; text-align: right; }
+
+  /* Tables */
+  .pc-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .pc-tbl th { text-align: left; font-size: 8.5px; font-weight: 600; color: #4b5563; padding: 0 8px; background: var(--c-soft); white-space: nowrap; }
+  .pc-tbl td { font-size: 10px; color: #1f2937; padding: 0 8px; border-top: 1px solid var(--c-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pc-tbl td a { color: var(--c-blue); text-decoration: none; }
+
+  /* Last Procedure Dates */
+  .pc-lpd { height: 218px; }
+  .pc-lpd table { width: 100%; border-collapse: collapse; margin-top: -7px; }
+  .pc-lpd th { height: 25px; text-align: left; font-size: 9px; font-weight: 600; color: #1f2937; border-bottom: 1px solid var(--c-line); padding: 0; }
+  .pc-lpd th.g { color: #6b7280; font-weight: 500; }
+  .pc-lpd td { height: 27px; font-size: 10.5px; font-weight: 600; color: #1f2937; border-bottom: 1px solid #f0f1f3; padding: 0; }
+  .pc-lpd td.nc { font-weight: 400; color: #9ca3af; }
+  .pc-lpd td.dash { text-align: right; color: #9ca3af; font-weight: 400; }
+  .pc-code { height: 15px; padding: 0 7px; border-radius: 8px; background: #dbeafe; color: var(--c-blue); font-size: 9.5px; font-weight: 500; line-height: 15px; display: inline-block; }
+
+  /* Allergies, Meds & Immunizations */
+  .pc-ami { height: 495px; }
+  .pc-ami .pc-box { height: 137px; }
+  .pc-ami .pc-box + .pc-box { margin-top: 15px; }
+  .pc-allergy { margin: 9px 13px 0 8px; height: 24px; border-radius: 4px; background: #fdf0f0; display: flex; align-items: center; padding: 0 8px; font-size: 10.5px; font-weight: 500; }
+  .pc-med { height: 31px; display: flex; align-items: center; gap: 4px; padding: 0 16px; font-size: 10.5px; font-weight: 500; color: #1f2937; white-space: nowrap; }
+  .pc-bhead + .pc-med { margin-top: 10px; }
+  .pc-ami .pc-empty { padding-bottom: 10px; }
+  .pc-med small { font-size: 7.5px; color: #6b7280; font-weight: 400; }
+
+  /* Referral / Case / PGHD */
+  .pc-ref { height: 201px; }
+  .pc-ref .pc-box { height: 143px; margin-top: -4px; }
+  .pc-case { height: 214px; overflow: hidden; }
+  .pc-case .pc-head { margin-bottom: 8px; }
+  .pc-casebox { border: 1px solid var(--c-line); border-radius: 6px; height: 110px; padding: 7px 10px 0; margin-right: 19px; }
+  .pc-casebox + .pc-casebox { margin-top: 15px; }
+  .pc-casebox h4 { margin: 0; font-size: 11px; font-weight: 600; color: #1f2937; }
+  .pc-casebox small { display: block; font-size: 8px; color: #6b7280; margin-top: 3px; }
+  .pc-casegrid { display: grid; grid-template-columns: repeat(3, 177px); column-gap: 29px; margin: 7px 0 0 4px; }
+  .pc-casegrid div { height: 40px; background: var(--c-soft); border: 1px solid var(--c-line); border-radius: 4px; padding: 6px 6px 0; font-size: 8px; color: #6b7280; }
+  .pc-casegrid b { display: block; font-size: 10px; font-weight: 600; color: #1f2937; margin-top: 4px; }
+  .pc-pghd { height: 118px; }
+
+  /* Vitals & Measurements */
+  .pc-vitals { height: 390px; }
+  .pc-vgrid { display: grid; grid-template-columns: repeat(4, 160px); justify-content: center; row-gap: 8px; padding-top: 8px; }
+  .pc-vit { display: flex; flex-direction: column; align-items: center; height: 68px; }
+  .pc-vit .ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; }
+  .pc-vit b { font-size: 11px; font-weight: 600; color: #1f2937; margin-top: 4px; white-space: nowrap; }
+  .pc-vit b.red { color: #dc2626; font-weight: 500; }
+  .pc-vit small { font-size: 9px; color: #6b7280; margin-top: 3px; }
+  .ic.red { background: #fee2e2; color: #dc2626; } .ic.blue { background: #dbeafe; color: #2563eb; } .ic.green { background: #dcfce7; color: #16a34a; }
+  .ic.amber { background: #fef3c7; color: #d97706; } .ic.purple { background: #ede9fe; color: #7c3aed; } .ic.indigo { background: #e0e7ff; color: #4f46e5; }
+
+  /* Problem list & History */
+  .pc-prob { height: 397px; }
+  .pc-prob .act { height: 183px; }
+  .pc-prob .act th { height: 30px; }
+  .pc-prob .act td { height: 35px; }
+  .pc-pstat { display: inline-flex; align-items: center; gap: 3px; height: 15px; padding: 0 6px; border-radius: 8px; background: #fee2e2; color: #dc2626; font-size: 9.5px; }
+  .pc-pstat i { font-size: 7px; }
+  .pc-psearch { width: 177px; height: 20px; border: 1px solid #d1d5db; border-radius: 10px; display: flex; align-items: center; gap: 6px; padding: 0 9px; font-size: 9.5px; font-weight: 400; color: #9ca3af; background: #fff; }
+  .pc-hist { height: 144px; margin-top: 16px; }
+  .pc-hist .body { height: 104px; overflow-y: auto; padding: 0 15px 0 15px; scrollbar-width: thin; }
+  .pc-hrow { display: grid; grid-template-columns: 1fr auto; align-items: end; padding-top: 12px; }
+  .pc-hrow small { display: block; font-size: 8.5px; font-weight: 600; color: #4b5563; text-transform: uppercase; }
+  .pc-hrow span { font-size: 11px; color: #1f2937; }
+  .pc-hrow .d { text-align: right; font-size: 11px; color: #1f2937; }
+  .pc-hrow .d small { text-transform: none; color: #374151; }
+
+  .pc-labs { height: 198px; }
+  .pc-labs th, .pc-appt th { height: 28px; }
+  .pc-labs td, .pc-appt td { height: 28px; }
+  .pc-goals { height: 105px; }
+  .pc-goal { height: 27px; border: 1px solid var(--c-line); border-radius: 4px; display: flex; align-items: center; padding: 0 7px; font-size: 10.5px; font-weight: 600; color: #1f2937; margin-right: 12px; }
+  .pc-goal + .pc-goal { margin-top: 7px; }
+  .pc-goals .pc-head + .pc-goal { margin-top: -8px; }
+  .pc-goals .pc-head { height: 35px; }
+  .pc-appt { height: 198px; }
+  .pc-appt th { height: 25px; }
+  .pc-imp { height: 130px; }
+  .pc-device { border: 1px solid var(--c-line); border-radius: 6px; height: 72px; margin: -4px 10px 0 9px; padding-right: 0; display: grid; grid-template-columns: 307px 1fr; padding: 9px 10px 0; row-gap: 6px; }
+  .pc-device div { font-size: 8px; color: #6b7280; }
+  .pc-device b { display: block; font-size: 9.5px; font-weight: 500; color: #1f2937; margin-top: 4px; }
+  .pc-device .inl b { display: inline; margin: 0 0 0 3px; font-weight: 600; }
+
+  /* Health Maintenance (fixed height, scrolls inside) */
+  .pc-hm { height: 369px; }
+  /* QA clips this card with no visible scrollbar; it still scrolls with the wheel. */
+  .pc-hm .body { height: 325px; overflow-y: auto; scrollbar-width: none; }
+  .pc-hm .body::-webkit-scrollbar { display: none; }
+  .pc-hm .pc-bhead .r { padding-right: 3px; }
+  .pc-hm .pc-box { height: 135px; }
+  .pc-hm .pc-box + .pc-box { margin-top: 16px; }
+  .pc-hm .list { height: 104px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #d1d5db transparent; }
+  .pc-fu { height: 31px; display: flex; align-items: center; gap: 4px; padding: 0 15px; font-size: 10px; font-weight: 500; color: #1f2937; }
+  .pc-fu:first-child { margin-top: 5px; }
+  .pc-fu small { font-size: 8px; color: #6b7280; font-weight: 400; }
+  .pc-imm { height: 31px; display: flex; align-items: center; gap: 4px; padding: 0 15px; font-size: 9px; font-weight: 700; color: #1f2937; text-transform: uppercase; }
+  .pc-imm:first-child { margin-top: 1px; }
+  .pc-imm small { font-size: 8px; color: #6b7280; font-weight: 400; text-transform: none; }
+  /* PEHR-8867: Add Vaccine sits in the Immunization History header, left of the print icon. */
+  .add-vaccine { height: 20px; padding: 0 11px; border: 1px solid var(--c-blue); border-radius: 10px; background: #fff; color: var(--c-blue); font: 500 10px/18px 'Inter', sans-serif; cursor: pointer; white-space: nowrap; }
+  .add-vaccine:hover { background: #eff6ff; }
+  .add-vaccine:focus-visible { outline: 2px solid #bfdbfe; outline-offset: 2px; }
+
+  /* ── Scrim + window ─────────────────────────────────────────────── */
+  .scrim { position: fixed; inset: 0; z-index: 50; background: rgba(17, 24, 39, .08); display: none; }
+  .scrim.show { display: block; }
+  .imm {
+    /* vh is divided by the html zoom (1.25) so the window still covers 9.5%–85.8% of the screen. */
+    position: fixed; z-index: 51; left: 16px; right: 16px; top: calc(9.5vh / 1.25); height: calc(76.3vh / 1.25); min-height: 368px;
+    background: #fff; border-radius: 6px; box-shadow: 0 10px 30px rgba(17, 24, 39, .14), 0 1px 3px rgba(17, 24, 39, .08);
+    display: none; flex-direction: column; overflow: hidden;
+  }
+  .imm.show { display: flex; }
+
+  .imm__head { flex: 0 0 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px 0 29px; border-bottom: 1px solid var(--line-soft); }
+  .imm__title { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--ink); letter-spacing: -.005em; }
+  .imm__x { width: 22px; height: 22px; display: grid; place-items: center; border: 0; background: none; border-radius: 4px; color: #6b7280; cursor: pointer; padding: 0; }
+  .imm__x:hover { background: #f3f4f6; color: var(--ink); }
+
+  .imm__body { flex: 1 1 auto; overflow-y: auto; padding: 22px calc(3.2% - 6px) 18px 3.05%; scrollbar-width: thin; scrollbar-color: #c4c8cf transparent; }
+  .imm__body::-webkit-scrollbar { width: 6px; }
+  .imm__body::-webkit-scrollbar-thumb { background: #c4c8cf; border-radius: 6px; }
+  .imm__body::-webkit-scrollbar-track { background: transparent; }
+
+  /* Mode radios */
+  .modes { display: flex; align-items: center; gap: 34px; height: 14px; margin-bottom: 14px; }
+  .mode { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 500; color: var(--label); cursor: pointer; user-select: none; }
+  .mode input { appearance: none; -webkit-appearance: none; margin: 0; width: 11px; height: 11px; border: 1px solid #9ca3af; border-radius: 50%; background: #fff; cursor: pointer; display: grid; place-items: center; }
+  .mode input:checked { border-color: var(--blue); background: var(--blue); box-shadow: inset 0 0 0 2px #fff; }
+  .mode input:focus-visible { outline: 2px solid #bfd3ff; outline-offset: 1px; }
+
+  /* Field grid */
+  .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 9.85%; }
+  .col { display: flex; flex-direction: column; gap: 11.5px; min-width: 0; }
+  .fld { min-width: 0; position: relative; }
+  .fld > label, .fld > .lbl { display: block; height: 14px; line-height: 14px; margin-bottom: 2px; font-size: 9.25px; font-weight: 500; color: var(--label); white-space: nowrap; }
+  .req { color: var(--red); margin-left: 2px; }
+
+  .ctl { position: relative; }
+  .inp, .sel {
+    width: 100%; height: 26px; border: 1px solid var(--line); border-radius: 4px; background: #fff;
+    padding: 0 9px; font: 400 10.5px/24px 'Inter', sans-serif; color: var(--ink); outline: none;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .inp::placeholder { color: var(--placeholder); }
+  .inp:hover, .sel:hover { border-color: #c5cad3; }
+  .inp:focus, .sel:focus { border-color: #7ea6ff; box-shadow: 0 0 0 3px rgba(47, 107, 255, .12); }
+  .inp:disabled { background: var(--disabled); border-color: var(--line-soft); color: var(--muted); cursor: default; }
+  .sel { appearance: none; -webkit-appearance: none; padding-right: 26px; cursor: pointer; }
+  .sel.empty { color: var(--placeholder); }
+  .sel option { color: var(--ink); }
+  .ctl .ico { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #8a909b; display: grid; }
+  .ctl .ico.btn { pointer-events: auto; cursor: pointer; border: 0; background: none; padding: 2px; right: 6px; border-radius: 3px; }
+  .ctl .ico.btn:hover { background: #f3f4f6; }
+  .ctl .ico.search { color: var(--blue); }
+  .with-ico .inp { padding-right: 28px; }
+  .fld.invalid .inp, .fld.invalid .sel { border-color: #f59e9e; }
+  .fld .err { position: absolute; left: 0; top: 100%; font-size: 8.5px; line-height: 10px; color: var(--red); margin-top: 1px; display: none; }
+  .fld.invalid .err { display: block; }
+  .ndc { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .native-date { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+
+  /* Vaccine typeahead */
+  .ta-list { position: absolute; left: 0; right: 0; top: calc(100% + 3px); z-index: 5; background: #fff; border: 1px solid var(--line-soft); border-radius: 6px; box-shadow: 0 8px 22px rgba(17, 24, 39, .12); max-height: 210px; overflow-y: auto; padding: 4px; display: none; }
+  .ta-list.show { display: block; }
+  .ta-item { display: flex; justify-content: space-between; gap: 12px; padding: 6px 8px; border-radius: 4px; font-size: 10.5px; cursor: pointer; }
+  .ta-item small { color: var(--muted); font-size: 9.5px; white-space: nowrap; }
+  .ta-item.hi, .ta-item:hover { background: var(--blue-tint); }
+  .ta-empty { padding: 8px; font-size: 10.5px; color: var(--muted); }
+
+  .full { margin-top: 11px; }
+  .txt { width: 100%; height: 49px; border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; font: 400 10.5px/1.4 'Inter', sans-serif; color: var(--ink); resize: vertical; outline: none; display: block; }
+  .txt:focus { border-color: #7ea6ff; box-shadow: 0 0 0 3px rgba(47, 107, 255, .12); }
+
+  /* Action buttons */
+  .actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+  .pill { height: 24px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--blue); background: var(--blue); color: #fff; font: 600 10px/22px 'Inter', sans-serif; cursor: pointer; white-space: nowrap; transition: background .12s, border-color .12s; }
+  .pill:hover { background: var(--blue-hover); border-color: var(--blue-hover); }
+  .pill.outline { background: #fff; color: var(--blue); }
+  .pill.outline:hover { background: var(--blue-tint); }
+  .pill.soft { height: 20px; padding: 0 14px; border: 0; background: var(--blue-tint); color: var(--blue); font-size: 9.5px; line-height: 20px; font-weight: 500; }
+  .pill.soft:hover { background: #dce7ff; }
+  .pill.soft:disabled { opacity: .55; cursor: default; }
+
+  /* Records card */
+  .card { margin-top: 21px; border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden; }
+  .tabs { height: 42px; display: flex; align-items: stretch; justify-content: space-between; padding: 0 18px; }
+  .tablist { display: flex; gap: 22px; }
+  .tab { position: relative; border: 0; background: none; padding: 0; font: 500 11px/1 'Inter', sans-serif; color: var(--muted); cursor: pointer; }
+  .tab[aria-selected="true"] { color: var(--ink); font-weight: 600; }
+  .tab[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 6px; height: 2px; border-radius: 2px; background: var(--blue); }
+  .tab:hover { color: var(--ink); }
+  .tab-tools { display: flex; align-items: center; gap: 9px; }
+  .tab-tools[hidden] { display: none; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead th { height: 27px; background: var(--head-bg); text-align: left; font-size: 8.75px; font-weight: 600; color: var(--muted); padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  thead th:first-child, tbody td:first-child { padding-left: 18px; }
+  tbody td { height: 32px; font-size: 10.5px; color: var(--ink); padding: 0 8px; border-top: 1px solid #f0f1f3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  tbody tr.row { cursor: pointer; }
+  tbody tr.row:hover td { background: #fafbfc; }
+  tbody tr.row.sel td { background: var(--blue-tint); }
+  .empty-row td { height: 92px; border-top: 0; text-align: center; padding: 0; }
+  .empty { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; font-size: 9.5px; color: var(--muted); }
+  .empty svg { color: #9ca3af; }
+  .panel[hidden] { display: none; }
+
+  /* Toast */
+  .toast { position: fixed; left: 50%; bottom: 28px; z-index: 60; transform: translate(-50%, 10px); background: #111827; color: #fff; font-size: 12px; padding: 9px 14px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 900px) {
+    .imm { left: 8px; right: 8px; top: calc(5vh / 1.25); height: calc(90vh / 1.25); }
+    .imm__body { padding: 16px 18px; }
+    .grid { grid-template-columns: 1fr; row-gap: 11px; }
+    .modes { flex-wrap: wrap; height: auto; gap: 10px 20px; }
+    .actions { flex-wrap: wrap; }
+    .card { overflow-x: auto; }
+    table { min-width: 760px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pc">
+  <!-- Fixed header -->
+  <header class="pc-top">
+    <img class="pc-logo" src="logo.svg" alt="Practice EHR">
+    <div class="pc-patient">
+      <div class="pc-avatar"><i class="fa-solid fa-user"></i><span class="flag"><i class="fa-solid fa-circle-user"></i></span></div>
+      <div>
+        <div class="pc-pname"><span class="dot"></span>COTTELL ROSAS, K...</div>
+        <span class="pc-tag">KF</span>
+        <div class="pc-pmeta"><b>0</b> Year(s), <b>M</b>ale, 08/11/2026</div>
+      </div>
+    </div>
+    <div class="pc-user"><i class="fa-solid fa-bell"></i><span class="pc-av">HH</span></div>
+    <div class="pc-loc">FMED-1 <i class="fa-solid fa-location-dot"></i></div>
+  </header>
+  <nav class="pc-nav">
+    <div class="pc-menu">
+      <a href="#"><i class="fa-solid fa-house"></i>Home</a>
+      <a href="#" class="on"><i class="fa-solid fa-user-injured"></i>Patient</a>
+      <a href="#"><i class="fa-solid fa-calendar-days"></i>Scheduling</a>
+      <a href="#"><i class="fa-solid fa-file-invoice-dollar"></i>Billing</a>
+      <a href="#"><i class="fa-solid fa-chart-column"></i>Reports</a>
+      <a href="#"><i class="fa-solid fa-gear"></i>AI Agent</a>
+      <a href="#"><i class="fa-solid fa-bullhorn"></i>CRM</a>
+      <a href="#"><i class="fa-solid fa-gear"></i>Setup</a>
+    </div>
+    <div class="pc-navr">
+      <span class="pc-switch">Switch Patient <i class="fa-solid fa-chevron-down"></i></span>
+      <span class="pc-org"><span class="dot"></span>EBDSI<i class="fa-solid fa-chevron-down"></i></span>
+      <i class="fa-solid fa-wand-magic-sparkles pc-ai"></i>
+      <i class="fa-solid fa-user-plus pc-addp"></i>
+      <span class="pc-qs"><i class="fa-solid fa-magnifying-glass"></i>Quick Patient Search<i class="fa-solid fa-sliders"></i></span>
+    </div>
+  </nav>
+  <div class="pc-sub">
+    <button class="pc-pill" type="button">HIE Records</button>
+    <button class="pc-pill" type="button">Walk-In Check In</button>
+    <i class="fa-solid fa-print pc-ico"></i>
+    <i class="fa-solid fa-gear pc-ico"></i>
+  </div>
+
+  <!-- Fixed left rail -->
+  <aside class="pc-rail" aria-label="Chart navigation">
+    <i class="fa-solid fa-lock-open blue" style="top:25px;font-size:12px"></i>
+    <span class="on" style="top:49px"></span>
+    <i class="fa-solid fa-clone blue" style="top:58px"></i>
+    <i class="fa-solid fa-dollar-sign" style="top:95px"></i>
+    <i class="fa-solid fa-user" style="top:131px"></i>
+    <i class="fa-solid fa-shield-halved" style="top:169px"></i>
+    <i class="fa-solid fa-file-lines" style="top:204px"></i>
+    <i class="fa-solid fa-envelope" style="top:242px"></i>
+    <i class="fa-solid fa-flask" style="top:277px"></i>
+    <i class="fa-solid fa-pills" style="top:314px"></i>
+  </aside>
+  <span class="pc-strip"></span>
+  <span class="pc-tab flow">Flow Sheet <i class="fa-solid fa-chevron-left"></i></span>
+  <span class="pc-tab ai">AI Chart Summary <i class="fa-solid fa-wand-magic-sparkles"></i></span>
+
+  <!-- Scrolling chart content -->
+  <main class="pc-scroll" id="chart" aria-label="Patient chart">
+    <section class="pc-overview">
+      <div class="pc-ov"><span class="ic blue"><i class="fa-solid fa-capsules"></i></span><div><small>Pharmacy</small><strong>•Bay Area Pharmacy #01</strong><span>14841 N Florida Ave</span></div></div>
+      <div class="pc-ov"><span class="ic red"><i class="fa-solid fa-triangle-exclamation"></i></span><div><small>Alerts &amp; Flags</small><strong class="clip">MEDICATION, PROBLEM LIST, Health is one of the most valuable aspects of life. Maintaining good health requires a balanced lifestyle.</strong></div></div>
+      <div class="pc-ov"><span class="ic green"><i class="fa-solid fa-notes-medical"></i></span><div><small>Last Visit</small><strong>10/30/2026</strong><span>OFFICE VISIT</span><span>JGILES</span></div></div>
+      <div class="pc-ov"><span class="ic purple"><i class="fa-solid fa-calendar-check"></i></span><div><small>Next Appointment</small><strong>11/01/2027</strong><span>N/A</span><span>ACAPLE PT</span></div></div>
+    </section>
+
+    <section class="pc-card pc-visit">
+      <div class="pc-head"><h3>Visit</h3>
+        <div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> New Visit</button><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> New Encounter</button></div>
+      </div>
+      <div class="pc-vtools">
+        <span class="pc-input" style="width:708px"><i class="fa-solid fa-magnifying-glass" style="color:#6b7280"></i>Search</span>
+        <span class="pc-input" style="width:164px;margin-left:auto"><b>ACAPLE PT</b><i class="fa-solid fa-xmark" style="margin-left:auto;color:#374151"></i><i class="fa-solid fa-chevron-down" style="margin-left:4px"></i></span>
+        <span class="pc-input" style="width:165px;margin-left:9px">TYPE VISIT TYPE<i class="fa-solid fa-chevron-down"></i></span>
+        <span class="pc-input" style="width:165px;margin-left:9px;margin-right:8px">TYPE DURATION<i class="fa-solid fa-chevron-down"></i></span>
+      </div>
+      <div class="pc-vlist">
+        <div class="pc-vrow"><span class="pc-vicon"><i class="fa-solid fa-stethoscope"></i></span><div class="pc-vbody"><div class="pc-vtitle">All Type Questions : Chief Complaint</div><div class="pc-vsub">ACAPLE PT - 10/28/2026 -Wednesday</div></div><span class="pc-status">IN PROGRESS / NOT BILLED</span></div>
+        <div class="pc-vrow"><span class="pc-vicon"><i class="fa-solid fa-stethoscope"></i></span><div class="pc-vbody"><div class="pc-vtitle">AI Scribe : Chief Complaint</div><div class="pc-vsub">ACAPLE PT - 10/01/2026 -Thursday</div></div><span class="pc-status">SIGNED OFF / NOT BILLED</span></div>
+        <div class="pc-vrow"><span class="pc-vicon"><i class="fa-solid fa-stethoscope"></i></span><div class="pc-vbody"><div class="pc-vtitle">Family Medicine1 : Chief Complaint</div><div class="pc-vsub">ACAPLE PT - 09/30/2026 -Wednesday</div><div class="pc-chips"><span class="pc-chip">ANTHRAX VAC...</span><span class="pc-chip">PLAGUE VACCI...</span><span class="pc-chip">OFFICE OUTPA...</span><span class="pc-chip red">ESSENTIAL (PR...</span></div></div><span class="pc-status">IN PROGRESS / NOT BILLED</span></div>
+        <div class="pc-vrow"><span class="pc-vicon"><i class="fa-solid fa-stethoscope"></i></span><div class="pc-vbody"><div class="pc-vtitle">Neurology : Chief Complaint</div><div class="pc-vsub">ACAPLE PT - 09/17/2026 -Thursday</div></div><span class="pc-status">IN PROGRESS / NOT BILLED</span></div>
+        <div class="pc-vrow"><span class="pc-vicon"><i class="fa-solid fa-stethoscope"></i></span><div class="pc-vbody"><div class="pc-vtitle">Neurology : Chief Complaint</div><div class="pc-vsub">ACAPLE PT - 09/17/2026 -Thursday</div></div><span class="pc-status">IN PROGRESS / NOT BILLED</span></div>
+      </div>
+    </section>
+
+    <div class="pc-cols">
+      <!-- Left column -->
+      <div class="pc-col">
+        <section class="pc-card pc-todo">
+          <div class="pc-head"><h3>To Do</h3></div>
+          <div class="pc-todo-body">
+            <div class="pc-filters">
+              <div class="pc-filter on"><i class="fa-solid fa-list"></i>All<span class="n">36</span></div>
+              <div class="pc-filter"><i class="fa-regular fa-circle-dot"></i>Other<span class="n">26</span></div>
+              <div class="pc-filter"><i class="fa-solid fa-gears"></i>Automation<span class="n">3</span></div>
+              <div class="pc-filter"><i class="fa-regular fa-bell"></i>Reminder<span class="n">2</span></div>
+              <div class="pc-filter"><i class="fa-solid fa-headset"></i>AI Agent<span class="n">2</span></div>
+            </div>
+            <div class="pc-tasks">
+              <div class="pc-task tall">@@@@@@@@@@@@@@@@ddddddddd##$%^&amp;+(+&amp;^%$#@$%^&amp;+ ()*&amp;^%$#$%^&amp;+()_(+&amp;^%$#$%^&amp;+()(+&amp;^%$#@!#$%^&amp;+(&amp;^%$#@!@#$%^&amp;...</div>
+              <div class="pc-task tall">EHR-8178 — Messages/Tasks Bucket Goes Blank When a Message Contains a Special Character...</div>
+              <div class="pc-task">INITIAL OBSERVATION CARE/DAY 30 MINUTES 99214 (I10)<span class="pri">Low</span></div>
+              <div class="pc-task">Tesring</div>
+              <div class="pc-task">hello</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pc-card pc-ins">
+          <div class="pc-head"><i class="fa-solid fa-address-card"></i><h3>Insurance &amp; Financial</h3><div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> Add Plan</button></div></div>
+          <div class="pc-insbox" style="height:83px"><h4>Primary Insurance</h4><span class="pc-active">Active</span>
+            <div class="pc-kv"><div>Plan: <b>KF</b></div><div>Member ID: <b>YXM51950359</b></div><div>Group #: <b>N/A</b></div><div>Copay: <b>$3.00</b></div></div></div>
+          <div class="pc-insbox" style="height:84px"><h4>Secondary Insurance</h4><span class="pc-active">Active</span>
+            <div class="pc-kv"><div>Plan: <b>UHC87726W</b></div><div>Member ID: <b>13545545</b></div><div>Group #: <b>N/A</b></div><div>Copay: <b>$0.00</b></div></div></div>
+          <div class="pc-insbox" style="height:92px;margin-top:14px"><h4 style="font-weight:500">Financial Summary</h4>
+            <div class="pc-fin"><div>Advance Payment<b>$27.27</b></div><div>Last Payment<b>$3.00 (09/30/2026)</b></div><div class="split"><span>Patient Aging</span><b>$-7.00</b><span>Plan Aging</span><b>$46.00</b></div></div></div>
+        </section>
+
+        <section class="pc-card pc-lpd">
+          <div class="pc-head"><i class="fa-solid fa-clock-rotate-left"></i><h3>Last Procedure Dates</h3><div class="r"><i class="fa-solid fa-gear" style="color:#2563eb;font-size:11px"></i></div></div>
+          <table>
+            <thead><tr><th style="width:204px">PROCEDURE / SUPPLY</th><th class="g">CODES</th><th class="g" style="text-align:right">LAST DONE</th></tr></thead>
+            <tbody>
+              <tr><td>Nail Debridement</td><td><span class="pc-code">99203</span></td><td class="dash">—</td></tr>
+              <tr><td>Office visit group</td><td><span class="pc-code">99202</span></td><td class="dash">—</td></tr>
+              <tr><td>test</td><td><span class="pc-code">11719</span></td><td class="dash">—</td></tr>
+              <tr><td>nail</td><td class="nc">No codes</td><td class="dash">—</td></tr>
+              <tr><td>nail debridement</td><td class="nc">No codes</td><td class="dash">—</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="pc-card pc-ami">
+          <div class="pc-head" style="height:35px;padding-top:6px"><i class="fa-solid fa-pills"></i><h3>Allergies, Meds &amp; Immunizations</h3></div>
+          <div class="pc-box"><div class="pc-bhead t32"><i class="fa-solid fa-triangle-exclamation" style="color:#dc2626"></i>Allergies</div><div class="pc-allergy">Carbamazepine</div></div>
+          <div class="pc-box"><div class="pc-bhead t32"><i class="fa-solid fa-prescription-bottle" style="color:#2563eb"></i>Medications</div>
+            <div class="pc-med">Abc Plus 0.4 Mg-300 Mcg-250 Mcg Tablet <small>take 1 tablet daily</small></div>
+            <div class="pc-med">Abilify Maintena 300 Mg Intramuscular Suspension,Extended Release <small>test</small></div>
+            <div class="pc-med">Bacitracin (Bulk) 5 Million Unit Powder <small>Take 1 dose three times a day</small></div></div>
+          <div class="pc-box"><div class="pc-bhead t32"><i class="fa-solid fa-syringe" style="color:#16a34a"></i>Immunizations
+              <div class="r"><button class="add-vaccine" id="open-imm" type="button">Add Vaccine</button></div></div>
+            <div class="pc-empty" id="ami-imm-empty" style="height:104px"><i class="fa-solid fa-circle-info"></i>No Immunizations Found</div>
+            <div class="list" id="ami-imm" style="height:104px;overflow-y:auto;scrollbar-width:thin" hidden></div></div>
+        </section>
+
+        <section class="pc-card pc-ref">
+          <div class="pc-head"><i class="fa-solid fa-id-badge"></i><h3>Referral Management</h3><div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> New Referral</button></div></div>
+          <div class="pc-box">
+            <table class="pc-tbl"><thead><tr><th style="height:27px">Ref. Provider</th><th>Date Range</th><th>Visits Allowed</th><th>Visits Used</th></tr></thead></table>
+            <div class="pc-empty" style="height:114px;font-weight:600">No records found.</div>
+          </div>
+        </section>
+
+        <section class="pc-card pc-case">
+          <div class="pc-head"><i class="fa-solid fa-folder-open"></i><h3>Case Management</h3></div>
+          <div class="pc-casebox"><h4>SPORTS INJURY SPORTS INJURY SP</h4><small>Started: 6/4/2024</small>
+            <div class="pc-casegrid"><div>Operating Provider<b>N/A</b></div><div>Case Type<b>SPORTS INJURY</b></div><div>Visit in Case<b>5</b></div></div></div>
+          <div class="pc-casebox"><h4>OTHER</h4></div>
+        </section>
+
+        <section class="pc-card pc-pghd">
+          <div class="pc-head"><i class="fa-solid fa-address-card"></i><h3>Patient Generated Health Data</h3></div>
+          <div class="pc-empty" style="margin-top:10px"><i class="fa-solid fa-circle-info"></i>No Patient Generated Health Data Found</div>
+        </section>
+      </div>
+
+      <!-- Right column -->
+      <div class="pc-col r">
+        <section class="pc-card pc-vitals">
+          <div class="pc-head" style="height:41px"><i class="fa-solid fa-heart-pulse"></i><h3>Vitals &amp; Measurements</h3><div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> Add Vitals</button></div></div>
+          <div class="pc-box" style="height:199px"><div class="pc-bhead">Latest Vitals (07/30/2026)</div>
+            <div class="pc-vgrid">
+              <div class="pc-vit"><span class="ic red"><i class="fa-solid fa-heart"></i></span><b class="red">20 bpm</b><small>Heart Rate</small></div>
+              <div class="pc-vit"><span class="ic blue"><i class="fa-solid fa-gauge"></i></span><b>110</b><small>Systolic</small></div>
+              <div class="pc-vit"><span class="ic blue"><i class="fa-solid fa-gauge"></i></span><b>70</b><small>Diastolic</small></div>
+              <div class="pc-vit"><span class="ic green"><i class="fa-solid fa-lungs"></i></span><b>30 rpm</b><small>Resp. Rate</small></div>
+              <div class="pc-vit"><span class="ic amber"><i class="fa-solid fa-temperature-half"></i></span><b>103°F</b><small>Temperature</small></div>
+              <div class="pc-vit"><span class="ic purple"><i class="fa-solid fa-droplet"></i></span><b>15%</b><small>O2 Saturation</small></div>
+              <div class="pc-vit"><span class="ic amber"><i class="fa-solid fa-smoking"></i></span><b>Current every day smoker</b><small>Smoking Status</small></div>
+            </div>
+          </div>
+          <div class="pc-box" style="height:114px;margin-top:15px"><div class="pc-bhead t32">Measurements &amp; BMI</div>
+            <div class="pc-vgrid">
+              <div class="pc-vit"><span class="ic indigo"><i class="fa-solid fa-weight-scale"></i></span><b>180 lbs</b><small>Weight</small></div>
+              <div class="pc-vit"><span class="ic indigo"><i class="fa-solid fa-ruler"></i></span><b>6'2"</b><small>Height</small></div>
+              <div class="pc-vit"><span class="ic indigo"><i class="fa-solid fa-calculator"></i></span><b>23</b><small>BMI</small></div>
+              <div class="pc-vit"><span class="ic indigo"><i class="fa-solid fa-tape"></i></span><b>18 in</b><small>Waist Circ.</small></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pc-card pc-prob">
+          <div class="pc-head" style="height:36px;padding-top:8px"><i class="fa-solid fa-clipboard-list"></i><h3>Problem List &amp; History</h3></div>
+          <div class="pc-box act"><div class="pc-bhead t38">Active Problems<div class="r"><span class="pc-psearch"><i class="fa-solid fa-magnifying-glass"></i>Start typing a Problem</span></div></div>
+            <table class="pc-tbl"><colgroup><col style="width:291px"><col style="width:128px"><col style="width:98px"><col></colgroup>
+              <thead><tr><th>Diagnosis</th><th>Date Added <i class="fa-solid fa-caret-up" style="font-size:7px"></i></th><th>Problem Status</th><th>ICD</th></tr></thead>
+              <tbody>
+                <tr><td>Testicular Pain, Unspecified</td><td>10/15/2026</td><td><span class="pc-pstat">Mild <i class="fa-solid fa-chevron-down"></i></span></td><td>N50.819</td></tr>
+                <tr><td>Major Contusion Of Left Kidney, Initial Encounter</td><td>09/08/2026</td><td><span class="pc-pstat">Diagnosed <i class="fa-solid fa-chevron-down"></i></span></td><td>S37.022A</td></tr>
+                <tr><td>Major Depressive Disorder, Single Episode, Mild</td><td>07/29/2026</td><td><span class="pc-pstat">Worse <i class="fa-solid fa-chevron-down"></i></span></td><td>F32.0</td></tr>
+              </tbody></table></div>
+          <div class="pc-box pc-hist"><div class="pc-bhead t38"><i class="fa-solid fa-feather-pointed" style="color:#16a34a"></i>History<div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> Add History</button></div></div>
+            <div class="body">
+              <div class="pc-hrow"><div><small>History Question Group N 616</small><span>Standing blood pressure : 561</span></div><div class="d"><small>Date Added</small>08/11/2026</div></div>
+              <div class="pc-hrow"><span>HISTORY QUESTION GROUP N 616 : History Question Group Yes</span><div class="d">08/11/2026</div></div>
+              <div class="pc-hrow"><div><small>Psychiatric Hx Fam Med</small><span>Anxiety Disorder: Unspecified</span></div><div class="d">08/19/2026</div></div>
+            </div></div>
+        </section>
+
+        <section class="pc-card pc-labs">
+          <div class="pc-head" style="height:36px;padding-top:8px"><i class="fa-solid fa-flask"></i><h3>Lab Results</h3></div>
+          <div class="pc-box"><table class="pc-tbl"><thead><tr><th style="height:29px">Test</th><th>Result</th><th>Range</th><th>Date <i class="fa-solid fa-caret-up" style="font-size:7px"></i></th><th>Status</th></tr></thead>
+            <tbody><tr><td>CMP</td><td></td><td></td><td>10/13/2026</td><td></td></tr><tr><td>MICROALBUMIN</td><td></td><td></td><td>10/13/2026</td><td></td></tr><tr><td>HBA1C</td><td></td><td></td><td>10/13/2026</td><td></td></tr><tr><td>CMP</td><td></td><td></td><td>10/01/2026</td><td></td></tr></tbody></table></div>
+        </section>
+
+        <section class="pc-card pc-goals">
+          <div class="pc-head"><i class="fa-solid fa-bullseye"></i><h3>Treatment Goals</h3></div>
+          <div class="pc-goal">Pediatric Ear Rinse Instructions</div>
+          <div class="pc-goal">Acne May Get Worse</div>
+        </section>
+
+        <section class="pc-card pc-appt">
+          <div class="pc-head"><i class="fa-regular fa-calendar-check"></i><h3>Appointments</h3></div>
+          <div class="pc-box" style="margin-top:-8px"><table class="pc-tbl"><thead><tr><th>Date</th><th>Time</th><th>Reason</th><th>Provider</th></tr></thead>
+            <tbody><tr><td><a href="#">07/24/2026</a></td><td>8:00 AM</td><td>ANNUAL</td><td>ABDUL</td></tr><tr><td><a href="#">07/18/2026</a></td><td>8:00 AM</td><td>ANNUAL</td><td>ABDUL</td></tr><tr><td><a href="#">07/16/2026</a></td><td>12:30 PM</td><td>ANNUAL</td><td>ABDUL</td></tr><tr><td><a href="#">07/16/2026</a></td><td>12:15 PM</td><td>ANNUAL</td><td>ABDUL</td></tr></tbody></table></div>
+        </section>
+
+        <section class="pc-card pc-imp">
+          <div class="pc-head"><i class="fa-solid fa-microchip"></i><h3>Implantable Devices</h3><div class="r"><button class="pc-pill" type="button"><i class="fa-solid fa-plus"></i> Add Device</button></div></div>
+          <div class="pc-device">
+            <div>Unique Device Identifier:<b>(01)10884521062856(11)141231(17)150707(10)A213B1(21)1234</b></div>
+            <div>Device Description:<b>Polyester suture, non-bioabsorbable, multifilament, non-antimicrobial</b></div>
+            <div class="inl">Status:<b>Active</b></div>
+            <div class="inl">Expiration Date:<b>07/07/2015</b></div>
+          </div>
+        </section>
+
+        <section class="pc-card pc-hm">
+          <div class="pc-head"><i class="fa-solid fa-heart"></i><h3>Health Maintenance</h3></div>
+          <div class="body">
+            <div class="pc-box"><div class="pc-bhead t31">Follow Up</div>
+              <div class="list">
+                <div class="pc-fu">1 Day - Patient is advised to follow up in 1 day. <small>10/15/2026</small></div>
+                <div class="pc-fu">1 DAY6 - Patient is advised to follow up in 1 day. <small>09/30/2026</small></div>
+                <div class="pc-fu">1 Day - Patient is advised to follow up in 1 day. <small>08/17/2026</small></div>
+              </div></div>
+            <div class="pc-box"><div class="pc-bhead">Immunization History
+                <div class="r"><i class="fa-solid fa-print" style="color:#2563eb;font-size:12px"></i></div></div>
+              <div class="list" id="hm-imm">
+                <div class="pc-imm">PLAGUE <small>09/30/2026</small></div>
+                <div class="pc-imm">CMVIG <small>08/10/2023</small></div>
+                <div class="pc-imm">ANTHRAX <small>09/30/2026</small></div>
+              </div></div>
+            <div class="pc-box"><div class="pc-bhead">Health Education</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="pc-foot">
+    <span>© 2026 Practice EHR, All rights reserved.</span>
+    <span class="clock"><i class="fa-solid fa-circle-half-stroke"></i><span id="pc-clock"></span> <span style="color:#9ca3af">(EST)</span></span>
+    <span class="links"><span>Privacy Policy</span><span>Terms of Service</span><span>Help Center</span></span>
+  </footer>
+  <span class="pc-chat"><i class="fa-solid fa-comments"></i></span>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="imm" id="imm" role="dialog" aria-modal="true" aria-labelledby="imm-title">
+  <header class="imm__head">
+    <h2 class="imm__title" id="imm-title">Immunization</h2>
+    <button class="imm__x" type="button" data-close aria-label="Close">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <div class="imm__body" id="imm-body">
+    <form id="imm-form" autocomplete="off" novalidate>
+      <div class="modes" role="radiogroup" aria-label="Immunization type">
+        <label class="mode"><input type="radio" name="mode" value="new" checked>Administer New</label>
+        <label class="mode"><input type="radio" name="mode" value="historical">Add Historical</label>
+        <label class="mode"><input type="radio" name="mode" value="not-administered">Not Administered</label>
+        <label class="mode"><input type="radio" name="mode" value="schedule">Add Schedule</label>
+      </div>
+
+      <div class="grid">
+        <!-- Left column -->
+        <div class="col">
+          <div class="fld" data-required>
+            <label for="f-vaccine">Vaccine<span class="req">*</span></label>
+            <div class="ctl with-ico">
+              <input class="inp" id="f-vaccine" placeholder="Start typing a vaccine" role="combobox" aria-expanded="false" aria-controls="ta-list">
+              <span class="ico"><svg width="10" height="10" viewBox="0 0 12 8" fill="none"><path d="M1 1.5l5 5 5-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <div class="ta-list" id="ta-list" role="listbox"></div>
+            </div>
+            <div class="err">Vaccine is required</div>
+          </div>
+          <div class="fld">
+            <label for="f-manufacturer">Manufacturer</label>
+            <div class="ctl"><select class="sel empty" id="f-manufacturer"><option value="">Select</option><option>GlaxoSmithKline</option><option>Merck &amp; Co.</option><option>Pfizer</option><option>Sanofi Pasteur</option><option>Seqirus</option><option>Moderna</option></select><span class="ico chev"></span></div>
+          </div>
+          <div class="fld">
+            <label for="f-dose">Dose (ml)</label>
+            <div class="ctl"><input class="inp" id="f-dose" inputmode="decimal"></div>
+          </div>
+          <div class="fld">
+            <label for="f-site">Site</label>
+            <div class="ctl"><select class="sel empty" id="f-site"><option value="">Select</option><option>Left Deltoid</option><option>Right Deltoid</option><option>Left Upper Arm</option><option>Right Upper Arm</option><option>Left Thigh</option><option>Right Thigh</option><option>Left Gluteus Medius</option><option>Right Gluteus Medius</option><option>Nasal</option><option>Oral</option></select><span class="ico chev"></span></div>
+          </div>
+          <div class="fld">
+            <label for="f-ndc">NDC</label>
+            <div class="ndc">
+              <div class="ctl"><select class="sel empty" id="f-ndc"><option value="">Select</option></select><span class="ico chev"></span></div>
+              <input class="inp" id="f-ndc-desc" disabled aria-label="NDC description">
+            </div>
+          </div>
+          <div class="fld">
+            <label for="f-lot">Lot #</label>
+            <div class="ctl"><input class="inp" id="f-lot"></div>
+          </div>
+          <div class="fld" data-required>
+            <label for="f-vis-version">VIS Version Date<span class="req">*</span></label>
+            <div class="ctl with-ico date"><input class="inp" id="f-vis-version" placeholder="MM/DD/YYYY"></div>
+            <div class="err">VIS Version Date is required</div>
+          </div>
+          <div class="fld">
+            <label for="f-vis-issued">VIS Issued Date</label>
+            <div class="ctl with-ico date"><input class="inp" id="f-vis-issued" placeholder="MM/DD/YYYY"></div>
+          </div>
+          <div class="fld">
+            <label for="f-date-admin">Date Administered</label>
+            <div class="ctl with-ico date"><input class="inp" id="f-date-admin" placeholder="MM/DD/YYYY"></div>
+          </div>
+          <div class="fld">
+            <label for="f-admin-notes">Administration Notes</label>
+            <div class="ctl"><select class="sel empty" id="f-admin-notes"><option value="">Select</option><option>New immunization record</option><option>Historical — source unspecified</option><option>Historical — from other provider</option><option>Historical — from parent's written record</option><option>Historical — from parent's recall</option><option>Historical — from school record</option><option>Historical — from public agency</option></select><span class="ico chev"></span></div>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="col">
+          <div class="fld">
+            <label for="f-cpt">CPT</label>
+            <div class="ctl with-ico"><input class="inp" id="f-cpt"><button class="ico btn search" type="button" id="cpt-search" aria-label="Search CPT"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+          </div>
+          <div class="fld">
+            <label for="f-cvx">CVX</label>
+            <div class="ctl"><input class="inp" id="f-cvx"></div>
+          </div>
+          <div class="fld">
+            <label for="f-trade">Trade Name</label>
+            <div class="ctl"><input class="inp" id="f-trade"></div>
+          </div>
+          <div class="fld" data-required>
+            <label for="f-route">Route<span class="req">*</span></label>
+            <div class="ctl"><select class="sel empty" id="f-route"><option value="">Select</option><option>Intramuscular</option><option>Subcutaneous</option><option>Intradermal</option><option>Intranasal</option><option>Oral</option><option>Percutaneous</option></select><span class="ico chev"></span></div>
+            <div class="err">Route is required</div>
+          </div>
+          <div class="fld">
+            <label for="f-action">Action Code</label>
+            <div class="ctl"><select class="sel" id="f-action"><option selected>Add</option><option>Update</option><option>Delete</option></select><span class="ico chev"></span></div>
+          </div>
+          <div class="fld">
+            <label for="f-expiration">Expiration Date</label>
+            <div class="ctl with-ico date"><input class="inp" id="f-expiration" placeholder="MM/DD/YYYY"></div>
+          </div>
+          <div class="fld">
+            <label for="f-financial">Financial Class</label>
+            <div class="ctl"><select class="sel empty" id="f-financial"><option value="">Select</option><option>Not VFC eligible</option><option>VFC eligible — Medicaid/Medicaid managed care</option><option>VFC eligible — Uninsured</option><option>VFC eligible — American Indian/Alaska Native</option><option>VFC eligible — Underinsured</option><option>Local-specific eligibility</option></select><span class="ico chev"></span></div>
+          </div>
+          <div class="fld">
+            <label for="f-provider">Provider</label>
+            <div class="ctl"><select class="sel" id="f-provider"><option selected>GHAFOOR, ABDUL</option><option>WILLIAMS, ROBERT</option><option>WILSON, NURSE</option></select><span class="ico chev"></span></div>
+          </div>
+          <div class="fld">
+            <label for="f-evidence">Evidence of Immunity</label>
+            <div class="ctl"><select class="sel empty" id="f-evidence"><option value="">Select</option><option>History of disease — physician diagnosed</option><option>Laboratory evidence of immunity</option><option>Birth before 1957</option><option>Documented vaccination</option></select><span class="ico chev"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fld full">
+        <label for="f-comments">Comments</label>
+        <textarea class="txt" id="f-comments"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="pill outline" type="button" data-act="add">Add Immunization</button>
+        <button class="pill" type="button" data-act="add-close">Add &amp; Close</button>
+        <button class="pill" type="button" data-close>Close</button>
+        <button class="pill" type="button" data-act="reset">Reset All</button>
+      </div>
+    </form>
+
+    <div class="card">
+      <div class="tabs">
+        <div class="tablist" role="tablist">
+          <button class="tab" role="tab" aria-selected="true" aria-controls="p-scheduled" id="t-scheduled" type="button">Scheduled Immunizations</button>
+          <button class="tab" role="tab" aria-selected="false" aria-controls="p-history" id="t-history" type="button">Immunization History</button>
+        </div>
+        <div class="tab-tools" data-tools="scheduled">
+          <button class="pill soft" type="button" data-act="apply">Apply</button>
+          <button class="pill soft" type="button" data-act="delete">Delete</button>
+        </div>
+        <div class="tab-tools" data-tools="history" hidden>
+          <button class="pill soft" type="button" data-act="audit">Audit</button>
+          <button class="pill soft" type="button" data-act="delete">Delete</button>
+        </div>
+      </div>
+
+      <div class="panel" id="p-scheduled" role="tabpanel" aria-labelledby="t-scheduled">
+        <table>
+          <colgroup><col style="width:9%"><col style="width:11.4%"><col style="width:15.3%"><col style="width:11%"><col style="width:15.5%"><col style="width:12.6%"><col style="width:12.6%"><col style="width:12.6%"></colgroup>
+          <thead><tr><th>Name</th><th>Due Date</th><th>Schedule Date</th><th>VIS Date</th><th>Financial Class</th><th>Comments</th><th>Entered By</th><th>Entry Date</th></tr></thead>
+          <tbody id="b-scheduled"></tbody>
+        </table>
+      </div>
+      <div class="panel" id="p-history" role="tabpanel" aria-labelledby="t-history" hidden>
+        <table>
+          <colgroup><col style="width:8.2%"><col style="width:16.5%"><col style="width:10%"><col style="width:14.1%"><col style="width:11.6%"><col style="width:16.7%"><col style="width:10.4%"><col style="width:12.5%"></colgroup>
+          <thead><tr><th>Name</th><th>Date Administered</th><th>VIS Date</th><th>Financial Class</th><th>Comments</th><th>Reason Non Admin</th><th>Entered By</th><th>Entry Date</th></tr></thead>
+          <tbody id="b-history"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Reference data — CVX/CPT codes are the standard CDC/AMA codes for each product.
+  var VACCINES = [
+    { name: 'BCG', cvx: '19', cpt: '90585', trade: 'TICE BCG', mfr: 'Merck & Co.', route: 'Percutaneous', dose: '', ndc: [['0052-0603-02', 'TICE BCG, 50 mg vial']] },
+    { name: 'Hepatitis A, adult', cvx: '52', cpt: '90632', trade: 'Havrix', mfr: 'GlaxoSmithKline', route: 'Intramuscular', dose: '1', ndc: [['58160-0826-52', 'Havrix 1440 EL.U/mL, 1 mL syringe']] },
+    { name: 'Hepatitis B, adult', cvx: '43', cpt: '90746', trade: 'Engerix-B', mfr: 'GlaxoSmithKline', route: 'Intramuscular', dose: '1', ndc: [['58160-0821-52', 'Engerix-B 20 mcg/mL, 1 mL syringe']] },
+    { name: 'HPV9', cvx: '165', cpt: '90651', trade: 'Gardasil 9', mfr: 'Merck & Co.', route: 'Intramuscular', dose: '0.5', ndc: [['0006-4121-02', 'Gardasil 9, 0.5 mL syringe']] },
+    { name: 'Influenza, quadrivalent, PF', cvx: '150', cpt: '90686', trade: 'Fluarix Quadrivalent', mfr: 'GlaxoSmithKline', route: 'Intramuscular', dose: '0.5', ndc: [['58160-0909-52', 'Fluarix Quadrivalent, 0.5 mL syringe']] },
+    { name: 'MMR', cvx: '03', cpt: '90707', trade: 'M-M-R II', mfr: 'Merck & Co.', route: 'Subcutaneous', dose: '0.5', ndc: [['0006-4681-00', 'M-M-R II, single-dose vial']] },
+    { name: 'Pneumococcal conjugate PCV20', cvx: '216', cpt: '90677', trade: 'Prevnar 20', mfr: 'Pfizer', route: 'Intramuscular', dose: '0.5', ndc: [['0005-2000-01', 'Prevnar 20, 0.5 mL syringe']] },
+    { name: 'Tdap', cvx: '115', cpt: '90715', trade: 'Boostrix', mfr: 'GlaxoSmithKline', route: 'Intramuscular', dose: '0.5', ndc: [['58160-0842-52', 'Boostrix, 0.5 mL syringe']] },
+    { name: 'Varicella', cvx: '21', cpt: '90716', trade: 'Varivax', mfr: 'Merck & Co.', route: 'Subcutaneous', dose: '0.5', ndc: [['0006-4827-00', 'Varivax, single-dose vial']] },
+    { name: 'Zoster recombinant', cvx: '187', cpt: '90750', trade: 'Shingrix', mfr: 'GlaxoSmithKline', route: 'Intramuscular', dose: '0.5', ndc: [['58160-0823-11', 'Shingrix, single-dose vial kit']] }
+  ];
+  var CURRENT_USER = 'GHAFOOR, ABDUL';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  var imm = $('#imm'), scrim = $('#scrim'), body = $('#imm-body'), form = $('#imm-form');
+  var records = { scheduled: [], history: [] };
+  var activeTab = 'scheduled';
+  var selected = null;
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmt(d) { return pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + '/' + d.getFullYear(); }
+  function today() { return fmt(new Date()); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  // ── Open / close ──────────────────────────────────────────────────
+  function openModal() {
+    imm.classList.add('show'); scrim.classList.add('show'); document.body.classList.add('modal-open');
+    body.scrollTop = 0;
+    setTimeout(function () { $('#f-vaccine').focus({ preventScroll: true }); }, 30);
+  }
+  function closeModal() {
+    imm.classList.remove('show'); scrim.classList.remove('show'); document.body.classList.remove('modal-open');
+    closeTypeahead();
+  }
+  $('#open-imm').addEventListener('click', openModal);
+
+  // Footer clock, as on the QA screen.
+  function tick() { $('#pc-clock').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).toLowerCase(); }
+  tick(); setInterval(tick, 1000);
+
+  // Administered/historical immunizations appear in Allergies, Meds & Immunizations › Immunizations
+  // (where Add Vaccine lives) and in Health Maintenance › Immunization History.
+  function addToChartHistory(name, date) {
+    ['#ami-imm', '#hm-imm'].forEach(function (sel) {
+      var row = document.createElement('div');
+      row.className = 'pc-imm';
+      row.innerHTML = esc(name) + ' <small>' + esc(date) + '</small>';
+      $(sel).insertBefore(row, $(sel).firstChild);
+    });
+    $('#ami-imm').hidden = false;
+    $('#ami-imm-empty').hidden = true;
+  }
+  $$('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && imm.classList.contains('show')) {
+      if ($('#ta-list').classList.contains('show')) closeTypeahead(); else closeModal();
+    }
+  });
+
+  // ── Selects: chevrons + placeholder colour ────────────────────────
+  var CHEV = '<svg width="10" height="10" viewBox="0 0 12 8" fill="none"><path d="M1 1.5l5 5 5-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  $$('.ico.chev').forEach(function (i) { i.innerHTML = CHEV; });
+  function syncSel(s) { s.classList.toggle('empty', !s.value); }
+  $$('.sel').forEach(function (s) { s.addEventListener('change', function () { syncSel(s); clearInvalid(s); }); });
+
+  // ── Date fields: MM/DD/YYYY mask + calendar picker ────────────────
+  var CAL = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5.2 1.6v2.6M10.8 1.6v2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  $$('.ctl.date').forEach(function (wrap) {
+    var inp = $('.inp', wrap);
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'ico btn'; btn.setAttribute('aria-label', 'Open calendar'); btn.innerHTML = CAL;
+    var native = document.createElement('input');
+    native.type = 'date'; native.className = 'native-date'; native.tabIndex = -1; native.setAttribute('aria-hidden', 'true');
+    wrap.appendChild(btn); wrap.appendChild(native);
+    btn.addEventListener('click', function () {
+      var m = inp.value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      native.value = m ? m[3] + '-' + m[1] + '-' + m[2] : '';
+      if (native.showPicker) { try { native.showPicker(); return; } catch (e) { /* fall through */ } }
+      native.focus(); native.click();
+    });
+    native.addEventListener('change', function () {
+      if (!native.value) return;
+      var p = native.value.split('-');
+      inp.value = p[1] + '/' + p[2] + '/' + p[0];
+      clearInvalid(inp);
+    });
+    inp.addEventListener('input', function () {
+      var d = inp.value.replace(/\D/g, '').slice(0, 8);
+      inp.value = d.length > 4 ? d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4) : d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+      clearInvalid(inp);
+    });
+  });
+
+  // ── Vaccine typeahead ─────────────────────────────────────────────
+  var vac = $('#f-vaccine'), list = $('#ta-list'), hi = -1, matches = [];
+  function renderTypeahead() {
+    var q = vac.value.trim().toLowerCase();
+    matches = VACCINES.filter(function (v) {
+      return !q || v.name.toLowerCase().indexOf(q) > -1 || v.trade.toLowerCase().indexOf(q) > -1 || v.cvx === q || v.cpt === q;
+    });
+    hi = matches.length ? 0 : -1;
+    list.innerHTML = matches.length
+      ? matches.map(function (v, i) { return '<div class="ta-item' + (i === hi ? ' hi' : '') + '" role="option" data-i="' + i + '"><span>' + esc(v.name) + '</span><small>' + esc(v.trade) + ' · CVX ' + esc(v.cvx) + '</small></div>'; }).join('')
+      : '<div class="ta-empty">No vaccines match “' + esc(vac.value) + '”</div>';
+    list.classList.add('show'); vac.setAttribute('aria-expanded', 'true');
+  }
+  function closeTypeahead() { list.classList.remove('show'); vac.setAttribute('aria-expanded', 'false'); }
+  function pick(v) {
+    vac.value = v.name;
+    $('#f-cvx').value = v.cvx; $('#f-cpt').value = v.cpt; $('#f-trade').value = v.trade; $('#f-dose').value = v.dose;
+    setSel('#f-manufacturer', v.mfr); setSel('#f-route', v.route);
+    var ndc = $('#f-ndc');
+    ndc.innerHTML = '<option value="">Select</option>' + v.ndc.map(function (n) { return '<option value="' + esc(n[0]) + '" data-desc="' + esc(n[1]) + '">' + esc(n[0]) + '</option>'; }).join('');
+    ndc.value = v.ndc[0][0]; syncSel(ndc); $('#f-ndc-desc').value = v.ndc[0][1];
+    closeTypeahead(); clearInvalid(vac); clearInvalid($('#f-route'));
+  }
+  function setSel(sel, val) { var s = $(sel); s.value = val; syncSel(s); }
+  vac.addEventListener('click', renderTypeahead);
+  vac.addEventListener('input', function () { renderTypeahead(); clearInvalid(vac); });
+  vac.addEventListener('keydown', function (e) {
+    if (!list.classList.contains('show') || !matches.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      hi = (hi + (e.key === 'ArrowDown' ? 1 : -1) + matches.length) % matches.length;
+      $$('.ta-item', list).forEach(function (el, i) { el.classList.toggle('hi', i === hi); if (i === hi) el.scrollIntoView({ block: 'nearest' }); });
+    } else if (e.key === 'Enter') { e.preventDefault(); if (hi > -1) pick(matches[hi]); }
+  });
+  list.addEventListener('mousedown', function (e) {
+    var it = e.target.closest('.ta-item'); if (!it) return;
+    e.preventDefault(); pick(matches[+it.dataset.i]);
+  });
+  document.addEventListener('mousedown', function (e) { if (!e.target.closest('#f-vaccine') && !e.target.closest('#ta-list')) closeTypeahead(); });
+  $('#f-ndc').addEventListener('change', function () { var o = this.selectedOptions[0]; $('#f-ndc-desc').value = o && o.dataset.desc || ''; });
+  $('#cpt-search').addEventListener('click', function () {
+    var q = $('#f-cpt').value.trim();
+    var v = VACCINES.filter(function (x) { return x.cpt === q; })[0];
+    if (v) { pick(v); toast('CPT ' + q + ' — ' + v.name); }
+    else { vac.focus(); toast(q ? 'No vaccine found for CPT ' + q : 'Type a CPT code, or pick a vaccine'); }
+  });
+
+  // ── Validation ────────────────────────────────────────────────────
+  function clearInvalid(el) { var f = el.closest('.fld'); if (f) f.classList.remove('invalid'); }
+  function validate() {
+    var mode = form.mode.value, ok = true, first = null;
+    var need = { '#f-vaccine': true, '#f-vis-version': mode === 'new', '#f-route': mode === 'new' };
+    Object.keys(need).forEach(function (sel) {
+      var el = $(sel), bad = need[sel] && !el.value.trim();
+      el.closest('.fld').classList.toggle('invalid', bad);
+      if (bad) { ok = false; first = first || el; }
+    });
+    if (first) { first.focus(); first.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+    return ok;
+  }
+
+  // ── Records table ─────────────────────────────────────────────────
+  function render() {
+    var s = $('#b-scheduled'), h = $('#b-history');
+    s.innerHTML = records.scheduled.length ? records.scheduled.map(function (r, i) {
+      return '<tr class="row' + (selected && selected.tab === 'scheduled' && selected.i === i ? ' sel' : '') + '" data-tab="scheduled" data-i="' + i + '"><td>' + esc(r.name) + '</td><td>' + esc(r.due) + '</td><td>' + esc(r.schedule) + '</td><td>' + esc(r.vis) + '</td><td>' + esc(r.fc) + '</td><td>' + esc(r.comments) + '</td><td>' + esc(r.by) + '</td><td>' + esc(r.entry) + '</td></tr>';
+    }).join('') : emptyRow('No scheduled immunizations recorded');
+    h.innerHTML = records.history.length ? records.history.map(function (r, i) {
+      return '<tr class="row' + (selected && selected.tab === 'history' && selected.i === i ? ' sel' : '') + '" data-tab="history" data-i="' + i + '"><td>' + esc(r.name) + '</td><td>' + esc(r.administered) + '</td><td>' + esc(r.vis) + '</td><td>' + esc(r.fc) + '</td><td>' + esc(r.comments) + '</td><td>' + esc(r.reason) + '</td><td>' + esc(r.by) + '</td><td>' + esc(r.entry) + '</td></tr>';
+    }).join('') : emptyRow('No past immunizations recorded');
+  }
+  function emptyRow(msg) {
+    return '<tr class="empty-row"><td colspan="8"><span class="empty"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="currentColor"/><rect x="7.1" y="7" width="1.8" height="5" rx=".9" fill="#fff"/><circle cx="8" cy="4.6" r="1.05" fill="#fff"/></svg>' + esc(msg) + '</span></td></tr>';
+  }
+  $$('tbody').forEach(function (tb) {
+    tb.addEventListener('click', function (e) {
+      var tr = e.target.closest('tr.row'); if (!tr) return;
+      var i = +tr.dataset.i, tab = tr.dataset.tab;
+      selected = selected && selected.tab === tab && selected.i === i ? null : { tab: tab, i: i };
+      render();
+    });
+  });
+
+  function setTab(name) {
+    activeTab = name; selected = null;
+    $('#t-scheduled').setAttribute('aria-selected', name === 'scheduled');
+    $('#t-history').setAttribute('aria-selected', name === 'history');
+    $('#p-scheduled').hidden = name !== 'scheduled';
+    $('#p-history').hidden = name !== 'history';
+    $$('[data-tools]').forEach(function (t) { t.hidden = t.dataset.tools !== name; });
+    render();
+  }
+  $('#t-scheduled').addEventListener('click', function () { setTab('scheduled'); });
+  $('#t-history').addEventListener('click', function () { setTab('history'); });
+
+  function addRecord() {
+    if (!validate()) { toast('Fill in the required fields'); return false; }
+    var mode = form.mode.value, fc = $('#f-financial').value, cm = $('#f-comments').value.trim();
+    var base = { name: vac.value.trim(), vis: $('#f-vis-version').value, fc: fc, comments: cm, by: CURRENT_USER, entry: today() };
+    if (mode === 'schedule') {
+      var due = $('#f-date-admin').value || today();
+      records.scheduled.unshift(Object.assign({ due: due, schedule: today() }, base));
+      setTab('scheduled');
+    } else {
+      records.history.unshift(Object.assign({
+        administered: mode === 'not-administered' ? '' : ($('#f-date-admin').value || today()),
+        reason: mode === 'not-administered' ? ($('#f-admin-notes').value || 'Patient refusal') : ''
+      }, base));
+      if (mode !== 'not-administered') addToChartHistory(base.name, records.history[0].administered);
+      setTab('history');
+    }
+    toast(mode === 'schedule' ? 'Immunization scheduled' : mode === 'not-administered' ? 'Recorded as not administered' : 'Immunization added');
+    resetForm(true);
+    return true;
+  }
+
+  function resetForm(keepMode) {
+    var mode = form.mode.value;
+    form.reset();
+    if (keepMode) form.mode.value = mode;
+    $('#f-ndc').innerHTML = '<option value="">Select</option>';
+    $('#f-ndc-desc').value = '';
+    $('#f-date-admin').value = today();
+    $$('.sel').forEach(syncSel);
+    $$('.fld.invalid').forEach(function (f) { f.classList.remove('invalid'); });
+    closeTypeahead();
+  }
+
+  $$('[data-act]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var act = b.dataset.act;
+      if (act === 'add') addRecord();
+      else if (act === 'add-close') { if (addRecord()) closeModal(); }
+      else if (act === 'reset') { resetForm(false); body.scrollTo({ top: 0, behavior: 'smooth' }); toast('Form cleared'); }
+      else if (act === 'delete') {
+        if (!selected || selected.tab !== activeTab) { toast('Select a row to delete'); return; }
+        records[activeTab].splice(selected.i, 1); selected = null; render(); toast('Record deleted');
+      }
+      else if (act === 'apply') {
+        if (!selected || selected.tab !== 'scheduled') { toast('Select a scheduled immunization to apply'); return; }
+        var r = records.scheduled.splice(selected.i, 1)[0];
+        records.history.unshift({ name: r.name, administered: today(), vis: r.vis, fc: r.fc, comments: r.comments, reason: '', by: CURRENT_USER, entry: today() });
+        setTab('history'); toast(r.name + ' moved to Immunization History');
+      }
+      else if (act === 'audit') {
+        toast(records.history.length ? records.history.length + ' record(s) · last entry by ' + CURRENT_USER : 'No history to audit');
+      }
+    });
+  });
+  $$('input[name="mode"]').forEach(function (r) { r.addEventListener('change', function () { $$('.fld.invalid').forEach(function (f) { f.classList.remove('invalid'); }); }); });
+
+  $('#f-date-admin').value = today();
+  render();
+})();
+</script>
+</body>
+</html>

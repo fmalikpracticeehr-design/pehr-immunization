@@ -1,0 +1,6 @@
+{
+  "name": "pehr-documents",
+  "private": true,
+  "description": "PracticeEHR prototype — static page + Gemini-backed /api functions (Vercel)",
+  "type": "commonjs"
+}
