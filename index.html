@@ -294,11 +294,13 @@
   .imm__x { width: 22px; height: 22px; display: grid; place-items: center; border: 0; background: none; border-radius: 4px; color: #6b7280; cursor: pointer; padding: 0; }
   .imm__x:hover { background: #f3f4f6; color: var(--ink); }
 
-  .imm__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px calc(3.2% - 6px) 18px 3.05%; scrollbar-width: thin; scrollbar-color: #c4c8cf transparent; }
+  .imm__body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px calc(3.2% - 6px) 18px 1.6%; scrollbar-width: thin; scrollbar-color: #c4c8cf transparent; }
   .core-grid { padding:12px 0; border:0; border-radius:0; background:transparent; row-gap:11.5px; }
   .extra-info { margin-top:12px; border:0; border-radius:0; background:transparent; }
-  .extra-info > summary { padding:10px 12px; color:var(--label); font-size:10.5px; font-weight:600; cursor:pointer; }
-  .extra-info > summary::marker { color:var(--blue); }
+  .extra-info > summary { display:flex; align-items:center; justify-content:space-between; padding:10px 0; color:var(--label); font-size:10.5px; font-weight:600; cursor:pointer; list-style:none; }
+  .extra-info > summary::-webkit-details-marker { display:none; }
+  .extra-info > summary::after { content:''; width:7px; height:7px; margin:0 5px 3px 10px; border-right:1.5px solid #687386; border-bottom:1.5px solid #687386; transform:rotate(45deg); transition:transform .14s ease; }
+  .extra-info[open] > summary::after { transform:rotate(225deg); margin-bottom:-3px; }
   .extra-info .grid { padding:12px; }
   .extra-info > .fld.full { padding:0 12px 12px; }
   .imm__actions { flex: 0 0 auto; position: relative; z-index: 8; display:flex; justify-content:flex-end; align-items:center; gap:9px; padding:10px 3.05%; border-top:1px solid var(--line-soft); background:#fff; box-shadow:0 -3px 10px rgba(17,24,39,.04); }
@@ -706,7 +708,7 @@
 <button type="button" class="mode-tab active" role="tab" aria-selected="true" data-mode="new">Administer New</button><button type="button" class="mode-tab" role="tab" aria-selected="false" data-mode="historical">Add Historical</button><button type="button" class="mode-tab" role="tab" aria-selected="false" data-mode="not-administered">Not Administered</button><button type="button" class="mode-tab" role="tab" aria-selected="false" data-mode="schedule">Add Schedule</button></div>
 <section id="panel-historical" class="mode-panel" hidden><div class="mode-fields"><div class="fld"><label>Date Administered*</label><div class="ctl with-ico date"><input class="inp" id="f-hist-date" placeholder="MM/DD/YYYY"></div></div><div class="fld"><label for="f-source">Source of Information*</label><div class="ctl"><select class="sel empty" id="f-source"><option value="">- SELECT -</option><option>Birth Certificate</option><option>New Immunization Administered (by Sending Organization)</option><option>Other Provider</option><option>Other Registry</option><option>Parent Recall</option><option>Parent Written Record</option><option>Public Agency</option><option>School Record</option><option>Source Unspecified</option></select></div></div></div></section>
 <section id="panel-not-administered" class="mode-panel" hidden><div class="mode-fields not-admin-fields"><div class="fld"><label>Date Refused*</label><div class="ctl with-ico date"><input class="inp" id="f-date-refused" placeholder="MM/DD/YYYY"></div></div><div class="fld reason-field"><span class="lbl">Reason for non-administration*</span><div class="reason-options"><label><input type="radio" name="reason" value="Documented immunity/Titer">Documented immunity/Titer</label><label><input type="radio" name="reason" value="Entered by user in error">Entered by user in error</label><label><input type="radio" name="reason" value="Family Medical Condition">Family Medical Condition</label><label><input type="radio" name="reason" value="Person Medical Condition">Person Medical Condition</label><label><input type="radio" name="reason" value="Parental Decision">Parental Decision</label><label><input type="radio" name="reason" value="Religious Exemption">Religious Exemption</label><label><input type="radio" name="reason" value="Patient Decision">Patient Decision</label><label><input type="radio" name="reason" value="Other Reason">Other Reason</label></div><input class="inp" id="f-other-reason" placeholder="Other reason" disabled></div></div></section>
-<section id="panel-schedule" class="mode-panel" hidden><div class="fld"><label for="f-schedule-set">Immunization Set*</label><div class="ctl"><select class="sel empty" id="f-schedule-set"><option value="">- SELECT -</option><option>0-5 YEARS (PEDIARX TRACK)</option><option>0-5 YEARS (PENTACEL TRACK)</option><option>10-18 YEARS</option><option>ADULT IMMUNIZATION SCHEDULE</option><option>MMA IMMUNIZATION SCHEDULE</option></select></div></div></section>
+<section id="panel-schedule" class="mode-panel" hidden><div class="fld"><label for="f-schedule-set">Immunization Set*</label><div class="ctl"><select class="sel empty" id="f-schedule-set"><option value="">- SELECT -</option><option>0-5 YEARS (PEDIARIX TRACK)</option><option>0-5 YEARS (PENTACEL TRACK)</option><option>10-18 YEARS</option><option>ADULT IMMUNIZATION SCHEDULE</option><option>MMA IMMUNIZATION SCHEDULE</option></select></div></div></section>
 
       <div class="grid">
         <!-- Left column -->
@@ -965,7 +967,7 @@
     $$('.mode-tab').forEach(function(t){var on=t.dataset.mode===m;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));});
     var panels={historical:$('#panel-historical'),'not-administered':$('#panel-not-administered'),schedule:$('#panel-schedule')};
     Object.keys(panels).forEach(function(k){panels[k].hidden=k!==m;if(k===m)coreGrid.appendChild(panels[k]);});
-    coreGrid.hidden=false; coreLeft.hidden=m==='schedule'; coreRight.hidden=m==='schedule'; extraInfo.hidden=m!=='new'; $('#record-panels').hidden=m!=='new';
+    coreGrid.hidden=false; coreLeft.hidden=m==='schedule'; coreRight.hidden=m==='schedule'; extraInfo.hidden=m!=='new'; $('#record-panels').hidden=m!=='new'; if(m==='schedule') vac.closest('.fld').hidden=true;
     $$('.core-grid .fld').forEach(function(f){if(!f.closest('.mode-panel'))f.hidden=m!=='new'&&!f.contains(vac);});
     if(comments){if(m==='new')extraInfo.appendChild(comments);else if(m==='historical')$('#panel-historical').appendChild(comments);else if(m==='not-administered')$('#panel-not-administered').appendChild(comments);else comments.remove();}
     closeTypeahead();closeCptList();
