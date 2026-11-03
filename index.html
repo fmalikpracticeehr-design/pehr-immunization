@@ -1004,8 +1004,9 @@
     $('#f-mvx').value = v.mvx || ''; $('#f-brand').value = v.brand || '';
     setSel('#f-manufacturer', v.mfr); setSel('#f-site', v.bodySite || ''); setSel('#f-route', v.route);
     var ndc = $('#f-ndc');
-    ndc.innerHTML = '<option value="">Select</option>' + v.ndc.map(function (n) { return '<option value="' + esc(n[0]) + '" data-desc="' + esc(n[1]) + '">' + esc(n[0]) + '</option>'; }).join('');
-    ndc.value = v.ndc[0][0]; syncSel(ndc); $('#f-ndc-desc').value = v.ndc[0][1];
+    ndc.innerHTML = '<option value="">Select</option>' + (v.ndc || []).map(function (n) { return '<option value="' + esc(n[0]) + '" data-desc="' + esc(n[1]) + '">' + esc(n[0]) + '</option>'; }).join('');
+    if (v.ndc && v.ndc.length) { ndc.value = v.ndc[0][0]; syncSel(ndc); $('#f-ndc-desc').value = v.ndc[0][1]; }
+    else { ndc.value = ''; syncSel(ndc); $('#f-ndc-desc').value = ''; }
     closeTypeahead(); clearInvalid(vac); clearInvalid($('#f-route'));
   }
   function setSel(sel, val) { var s = $(sel); s.value = val; syncSel(s); }
