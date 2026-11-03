@@ -1,6 +1,0 @@
-<!doctype html><html><body style="margin:0;background:#222">
-<video id="v" src="qa.mp4" muted preload="auto" style="display:block;transform-origin:0 0"></video>
-<script>
-const v=document.getElementById('v');
-window.seek=(t,z,x,y)=>new Promise(r=>{v.style.transform=`scale(${z||1}) translate(${-(x||0)}px,${-(y||0)}px)`;v.onseeked=()=>r({t:v.currentTime,w:v.videoWidth,h:v.videoHeight,d:v.duration});v.currentTime=t;});
-</script></body></html>

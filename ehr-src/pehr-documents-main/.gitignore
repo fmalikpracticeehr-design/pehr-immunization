@@ -1,8 +1,0 @@
-.vercel
-.env*
-
-# local-only files (not part of the site)
-.claude/
-.zip
-*.png
-ICRP-permission-email.md
