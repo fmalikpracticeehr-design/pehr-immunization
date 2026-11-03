@@ -299,8 +299,8 @@
   .extra-info { margin-top:12px; border:0; border-radius:0; background:transparent; }
   .extra-info > summary { display:flex; align-items:center; justify-content:space-between; padding:10px 0; color:var(--label); font-size:10.5px; font-weight:600; cursor:pointer; list-style:none; }
   .extra-info > summary::-webkit-details-marker { display:none; }
-  .extra-info > summary::after { content:''; width:7px; height:7px; margin:0 5px 3px 10px; border-right:1.5px solid #687386; border-bottom:1.5px solid #687386; transform:rotate(45deg); transition:transform .14s ease; }
-  .extra-info[open] > summary::after { transform:rotate(225deg); margin-bottom:-3px; }
+  .extra-info-chevron { flex:0 0 8px; width:8px; height:8px; margin:0 5px 3px 10px; border-right:1.5px solid #687386; border-bottom:1.5px solid #687386; transform:rotate(45deg); transition:transform .14s ease; }
+  .extra-info[open] .extra-info-chevron { transform:rotate(225deg); margin-bottom:-3px; }
   .extra-info .grid { padding:12px; }
   .extra-info > .fld.full { padding:0 12px 12px; }
   .imm__actions { flex: 0 0 auto; position: relative; z-index: 8; display:flex; justify-content:flex-end; align-items:center; gap:9px; padding:10px 3.05%; border-top:1px solid var(--line-soft); background:#fff; box-shadow:0 -3px 10px rgba(17,24,39,.04); }
@@ -894,7 +894,7 @@
   var coreLeft = document.createElement('div'), coreRight = document.createElement('div');
   coreLeft.className = coreRight.className = 'col'; coreGrid.append(coreLeft, coreRight);
   var extraInfo = document.createElement('details'); extraInfo.className = 'extra-info'; extraInfo.open = true;
-  extraInfo.innerHTML = '<summary>Extra Info</summary>';
+  extraInfo.innerHTML = '<summary>Extra Info<span class="extra-info-chevron" aria-hidden="true"></span></summary>';
   var extraGrid = document.createElement('div'); extraGrid.className = 'grid';
   var extraLeft = document.createElement('div'), extraRight = document.createElement('div');
   extraLeft.className = extraRight.className = 'col'; extraGrid.append(extraLeft, extraRight); extraInfo.appendChild(extraGrid);
@@ -967,7 +967,7 @@
     $$('.mode-tab').forEach(function(t){var on=t.dataset.mode===m;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));});
     var panels={historical:$('#panel-historical'),'not-administered':$('#panel-not-administered'),schedule:$('#panel-schedule')};
     Object.keys(panels).forEach(function(k){panels[k].hidden=k!==m;if(k===m)coreGrid.appendChild(panels[k]);});
-    coreGrid.hidden=false; coreLeft.hidden=m==='schedule'; coreRight.hidden=m==='schedule'; extraInfo.hidden=m!=='new'; $('#record-panels').hidden=m!=='new'; if(m==='schedule') vac.closest('.fld').hidden=true;
+    coreGrid.hidden=false; coreLeft.hidden=m==='schedule'; coreRight.hidden=m==='schedule'; extraInfo.hidden=m!=='new'; $('#record-panels').hidden=m!=='new'; if(m==='schedule'){vaccineField.remove();}else if(!coreLeft.contains(vaccineField)){coreLeft.insertBefore(vaccineField,coreLeft.firstChild);}
     $$('.core-grid .fld').forEach(function(f){if(!f.closest('.mode-panel'))f.hidden=m!=='new'&&!f.contains(vac);});
     if(comments){if(m==='new')extraInfo.appendChild(comments);else if(m==='historical')$('#panel-historical').appendChild(comments);else if(m==='not-administered')$('#panel-not-administered').appendChild(comments);else comments.remove();}
     closeTypeahead();closeCptList();
@@ -1010,6 +1010,7 @@
 
   // ── Vaccine typeahead ─────────────────────────────────────────────
   var vac = $('#f-vaccine'), list = $('#ta-list'), hi = -1, matches = [];
+  var vaccineField = vac.closest('.fld');
   function renderTypeahead() {
     var q = vac.value.trim().toLowerCase();
     matches = VACCINES.filter(function (v) {
