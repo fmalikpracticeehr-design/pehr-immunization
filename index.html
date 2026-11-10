@@ -279,10 +279,11 @@
   .add-vaccine:focus-visible { outline: 2px solid #bfdbfe; outline-offset: 2px; }
 
   /* ── Immunization window ────────────────────────────────────────────
-     Built to the PEHR new-UI Modal spec (phase1-docs.vercel.app/components.html#modal-component):
-     #DFE3E9 stage, 98vw × (100vh − 120px) shell below a 100px top reservation, 16px radius, 18/700 title,
-     34px close, body padding 22/32/26 with a 1280px content column, 36px fields, 12/600 labels, 29px pill
-     buttons. The page runs at html zoom 1.25, so each value here is the spec value ÷ 1.25 (vw/vh too). */
+     Built to the PEHR new-UI Modal spec (phase1-docs.vercel.app/components.html#modal-component) and the
+     patterns shared by the New UI modal designs in Jira (Check In PEHR-6658, Walk-In PEHR-7989, Emergency
+     Contact PEHR-8198, Registry Info PEHR-8201, Reason PEHR-9411, Add Allergy PEHR-7964):
+     two-column fields, section headings, patient name + DOB pill in the header, Close + primary on the right.
+     The page runs at html zoom 1.25, so each value here is the spec value ÷ 1.25 (vw/vh too). */
   .scrim { position: fixed; inset: 0; z-index: 50; background: rgba(223, 227, 233, .94); display: none; }
   .scrim.show { display: block; animation: immFade .16s ease-out; }
   .imm {
@@ -296,10 +297,12 @@
   @keyframes immFade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes immRise { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translateX(-50%); } }
 
-  /* Header: title + close, 18px/24px padding, hairline rule */
-  .imm__head { flex: none; display: flex; align-items: center; gap: 8px; padding: 14.4px 19.2px; border-bottom: 1px solid #E5E7EB; }
-  .imm__title { margin: 0 auto 0 0; font-size: 14.4px; font-weight: 700; line-height: 19.2px; color: #111827; }
-  .imm__x { width: 27.2px; height: 27.2px; border-radius: 6.4px; display: grid; place-items: center; border: 0; background: transparent; color: #757575; cursor: pointer; padding: 0; }
+  /* Header: avatar + "Immunization - PATIENT" + DOB pill, close on the right (Check In pattern) */
+  .imm__head { flex: none; display: flex; align-items: center; gap: 9.6px; padding: 14.4px 19.2px; border-bottom: 1px solid #E5E7EB; }
+  .imm__avatar { flex: none; width: 22.4px; height: 22.4px; border-radius: 50%; border: 1.2px solid #2563EB; color: #2563EB; display: grid; place-items: center; font: 600 8px/1 'Inter', sans-serif; letter-spacing: .02em; }
+  .imm__title { margin: 0; font-size: 14.4px; font-weight: 700; line-height: 19.2px; color: #111827; white-space: nowrap; }
+  .hpill { display: inline-flex; align-items: center; height: 19.2px; padding: 0 8px; border-radius: 9999px; background: #DBEAFE; color: #2563EB; font: 500 9.6px/1 'Inter', sans-serif; white-space: nowrap; }
+  .imm__x { margin-left: auto; width: 27.2px; height: 27.2px; border-radius: 6.4px; display: grid; place-items: center; border: 0; background: transparent; color: #757575; cursor: pointer; padding: 0; }
   .imm__x:hover { background: #F3F4F6; color: #111827; }
 
   /* Body: the only scroller; content column capped at 1280px */
@@ -312,17 +315,27 @@
   .mode-panel[hidden] { display: none; }
 
   /* Mode tabs — Secondary Tabs spec: 14/14 labels, 7px/14px (active 10px/14px), white active shell + blue */
-  .modes { display: inline-flex; align-items: center; gap: 2px; padding: 4px; margin-bottom: 17.6px; border-radius: 8px; background: #F3F4F6; }
+  .modes { display: inline-flex; align-items: center; gap: 2px; padding: 4px; margin-bottom: 22.4px; border-radius: 8px; background: #F3F4F6; }
   .mode-tab { padding: 5.6px 11.2px; border: 0; border-radius: 6.4px; background: transparent; color: #6B7280; font: 400 11.2px/11.2px 'Inter', sans-serif; cursor: pointer; white-space: nowrap; }
   .mode-tab:hover { color: #2563EB; }
   .mode-tab.active { padding: 8px 11.2px; background: #fff; color: #2563EB; font-weight: 500; box-shadow: 0 1px 2.4px rgba(15, 23, 42, .12); }
   .mode-tab:focus-visible { outline: 2px solid #93C5FD; outline-offset: 1px; }
 
-  /* Form grid — 25px row rhythm */
-  .fgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 25.6px; row-gap: 20px; }
-  .fgrid .span-2 { grid-column: span 2; }
+  /* Section headings — h4.sec-head 18/700 #111827, 22px below; later sections get 12px extra above */
+  .sec-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 17.6px; }
+  .sec-row.later { margin-top: 29.6px; }
+  .sec-head { margin: 0; font-size: 14.4px; font-weight: 700; line-height: 19.2px; color: #111827; }
+  .sec-toggle { display: inline-flex; align-items: center; gap: 4.8px; border: 0; background: none; padding: 2.4px 4px; border-radius: 4px; color: #2563EB; font: 500 9.6px/1 'Inter', sans-serif; cursor: pointer; }
+  .sec-toggle:hover { background: #EDF3FF; }
+  .sec-toggle svg { transition: transform .18s ease; }
+  .sec-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .sec-toggle:focus-visible { outline: 2px solid #93C5FD; outline-offset: 1px; }
+
+  /* Form grid — two col-6 columns (462px each in 988 → 64px gutter), 25px row rhythm.
+     .pair splits one column into two short fields (Emergency Contact First Name / M.I pattern). */
+  .fgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 51.2px; row-gap: 20px; }
   .fgrid .span-all { grid-column: 1 / -1; }
-  .fstack { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 20px; width: calc(50% - 12.8px); }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 19.2px; min-width: 0; }
   .vac-slot { display: contents; }
   .fld { min-width: 0; position: relative; }
   .fld > label, .fld > .lbl { display: block; padding: 2.4px 0 4.8px; font-size: 9.6px; font-weight: 600; line-height: 12px; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -337,7 +350,7 @@
   }
   .inp::placeholder { color: #9CA3AF; }
   .inp:focus, .sel:focus { border-color: #3B82F6; box-shadow: 0 0 0 2.4px rgba(37, 99, 235, .15); }
-  .inp:disabled { background: #F3F4F6; color: #6B7280; cursor: default; }
+  .inp:disabled { background: #F3F4F6; border-color: #E5E7EB; color: #6B7280; cursor: default; }
   .sel { appearance: none; -webkit-appearance: none; padding-right: 24px; cursor: pointer; text-overflow: ellipsis; }
   .sel.empty { color: #9CA3AF; }
   .sel option { color: #1F2937; }
@@ -355,21 +368,13 @@
   .txt { width: 100%; height: 91.2px; border: 1px solid #D1D5DB; border-radius: 6.4px; padding: 9.6px; font: 400 11.2px/1.45 'Inter', sans-serif; color: #1F2937; resize: vertical; outline: none; display: block; }
   .txt::placeholder { color: #9CA3AF; }
   .txt:focus { border-color: #3B82F6; box-shadow: 0 0 0 2.4px rgba(37, 99, 235, .15); }
-
-  /* Additional-details toggle: hairline with a round chevron at its right end */
-  .more { display: flex; align-items: center; gap: 8px; margin: 18px 0 14px; }
-  .more::before { content: ''; flex: 1; height: 1px; background: #E5E7EB; }
-  .more-btn { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #D1D5DB; background: #fff; color: #6B7280; display: grid; place-items: center; cursor: pointer; padding: 0; transition: background .15s, color .15s, border-color .15s; }
-  .more-btn:hover { background: #EDF3FF; color: #2563EB; border-color: #3377FF; }
-  .more-btn svg { transition: transform .18s ease; }
-  .more-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
   .extra[hidden] { display: none; }
 
-  /* Not Administered reasons — radio group */
-  .reason-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; padding: 2px 0 9.6px; }
+  /* Not Administered reasons — radio set across the full row */
+  .reason-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9.6px 14.4px; padding: 2px 0 9.6px; }
   .reason-options label { display: flex; align-items: center; gap: 6.4px; font-size: 9.6px; color: #374151; cursor: pointer; }
   .reason-options input { width: 12.8px; height: 12.8px; margin: 0; accent-color: #0075FF; cursor: pointer; }
-  #panel-schedule .fld { width: calc(25% - 19.2px); min-width: 230px; }
+  #f-other-reason { width: calc(50% - 25.6px); }
 
   /* Typeaheads (vaccine + CPT) — 6px panel, 1px #E5E7EB, max 220px, hover #F3F4F6 + blue text */
   .ta-list, .cpt-list { position: absolute; left: 0; right: 0; top: calc(100% + 3.2px); z-index: 20; background: #fff; border: 1px solid #E5E7EB; border-radius: 4.8px; box-shadow: 0 8px 20px rgba(15, 23, 42, .12); max-height: 176px; overflow-y: auto; padding: 3.2px; display: none; }
@@ -379,43 +384,53 @@
   .ta-item.hi, .ta-item:hover, .cpt-item.hi, .cpt-item[data-i]:hover { background: #F3F4F6; color: #2563EB; }
   .ta-empty { padding: 7.2px; font-size: 9.6px; color: #6B7280; }
 
-  /* Buttons — 29px pills, 12/500; primary #3377FF, secondary white + #3377FF border; tertiary 27px #EDF3FF */
-  .btn { height: 23.2px; padding: 0 11.2px; border-radius: 9999px; border: 1px solid transparent; font: 500 9.6px/1 'Inter', sans-serif; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; }
+  /* Buttons — 29px pills, 12/500; .btn-blue #3377FF, .btn-white white + #3377FF border; tinted #EFF6FF/#BFDBFE */
+  .btn { height: 23.2px; padding: 0 11.2px; border-radius: 9999px; border: 1px solid transparent; font: 500 9.6px/1 'Inter', sans-serif; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s; display: inline-flex; align-items: center; justify-content: center; gap: 4.8px; }
   .btn--primary { background: #3377FF; border-color: #3377FF; color: #fff; }
   .btn--primary:hover { background: #2563EB; border-color: #2563EB; }
   .btn--ghost { background: #fff; color: #2563EB; border-color: #3377FF; }
   .btn--ghost:hover { background: #EDF3FF; }
-  .btn--tint { height: 21.6px; background: #EDF3FF; color: #2563EB; border-color: #E2E8F0; font-weight: 400; }
+  .btn--tint { background: #EFF6FF; color: #2563EB; border-color: #BFDBFE; }
   .btn--tint:hover { background: #DBEAFE; }
   .btn:focus-visible { outline: 2px solid #93C5FD; outline-offset: 2px; }
 
-  /* Footer: left content + right action group */
-  .imm__foot { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11.2px 25.6px; border-top: 1px solid #E5E7EB; }
-  .imm__foot-note { font-size: 9.6px; color: #6B7280; }
-  .imm__foot-note .req { margin: 0 2px 0 0; }
+  /* Footer: hairline-topped bar, actions right — Close (white) then the primary (Reason / Add Allergy pattern) */
+  .imm__foot { flex: none; display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 12.8px 19.2px; border-top: 1px solid #E5E7EB; }
   .imm__actions { display: flex; gap: 8px; }
 
-  /* Records card (Scheduled / History) — grid: tertiary tabs, 12/600 headers */
-  .card { margin-top: 20px; border: 1px solid #E5E7EB; border-radius: 6.4px; background: #fff; overflow: hidden; }
+  /* Records — data card (.dcard): 12px radius, head with title tabs + mini search + tinted actions,
+     .dgrid table (12/600 #6B7280 headers on #F9FAFB, 13px #374151 cells), "Showing X of Y results" foot */
+  .card { margin-top: 28.8px; border: 1px solid #E5E7EB; border-radius: 9.6px; background: #fff; overflow: hidden; }
   .card[hidden] { display: none; }
-  .tabs { height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 11.2px 0 4px; border-bottom: 1px solid #E5E7EB; }
-  .tablist { display: flex; gap: 2px; }
-  .tab { border: 0; background: none; padding: 5.6px 11.2px; font: 400 11.2px/11.2px 'Inter', sans-serif; color: #6B7280; cursor: pointer; border-radius: 6.4px; }
-  .tab[aria-selected="true"] { color: #2563EB; font-weight: 600; background: #fff; }
+  .tabs { display: flex; align-items: center; justify-content: space-between; gap: 9.6px; padding: 0 12.8px; border-bottom: 1px solid #E5E7EB; }
+  .tablist { display: flex; gap: 19.2px; align-self: stretch; }
+  .tab { position: relative; border: 0; background: none; padding: 13.6px 0 12px; font: 600 12px/1 'Inter', sans-serif; color: #9CA3AF; cursor: pointer; }
+  .tab[aria-selected="true"] { color: #111827; font-weight: 700; }
+  .tab[aria-selected="true"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; border-radius: 2px; background: #3377FF; }
   .tab:hover { color: #2563EB; }
-  .tab-tools { display: flex; align-items: center; gap: 6.4px; }
+  .tab:focus-visible { outline: 2px solid #93C5FD; outline-offset: 2px; border-radius: 4px; }
+  .card-tools { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+  .tab-tools { display: flex; align-items: center; gap: 8px; }
   .tab-tools[hidden], .panel[hidden] { display: none; }
+  .mini-search { position: relative; width: 168px; }
+  .mini-search input { width: 100%; height: 25.6px; border: 1px solid #D1D5DB; border-radius: 9999px; padding: 0 11.2px 0 25.6px; font: 400 9.6px/1 'Inter', sans-serif; color: #1F2937; outline: none; background: #fff; }
+  .mini-search input::placeholder { color: #757575; }
+  .mini-search input:focus { border-color: #3B82F6; box-shadow: 0 0 0 2.4px rgba(37, 99, 235, .15); }
+  .mini-search svg { position: absolute; left: 9.6px; top: 50%; transform: translateY(-50%); color: #757575; pointer-events: none; }
   .card table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-  .card thead th { height: 28px; background: #F9FAFB; text-align: left; font-size: 9.6px; font-weight: 600; color: #374151; padding: 0 8px; border-bottom: 1px solid #E5E7EB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card thead th:first-child, .card tbody td:first-child { padding-left: 11.2px; }
-  .card tbody td { height: 30px; font-size: 9.6px; color: #1F2937; padding: 0 8px; border-bottom: 1px solid #F3F4F6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card thead th { background: #F9FAFB; text-align: left; font-size: 9.6px; font-weight: 600; color: #6B7280; padding: 7.2px 9.6px; border-bottom: 1px solid #E5E7EB; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card thead th:first-child, .card tbody td:first-child { padding-left: 12.8px; }
+  .card tbody td { font-size: 10.4px; color: #374151; padding: 8.8px 9.6px; border-bottom: 1px solid #F3F4F6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card tbody td:first-child { color: #111827; font-weight: 600; }
   .card tbody tr:last-child td { border-bottom: 0; }
   .card tbody tr.row { cursor: pointer; }
   .card tbody tr.row:hover td { background: #F9FAFB; }
   .card tbody tr.row.sel td { background: #EFF6FF; }
   .empty-row td { height: 80px; text-align: center; padding: 0; }
+  .card tbody .empty-row td:first-child { font-weight: 400; padding-left: 0; }
   .empty { display: inline-flex; flex-direction: column; align-items: center; gap: 4.8px; font-size: 9.6px; color: #6B7280; }
   .empty svg { color: #9CA3AF; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; padding: 9.6px 12.8px; border-top: 1px solid #E5E7EB; background: #F9FAFB; font-size: 10.4px; color: #6B7280; }
 
   /* CPT save confirmation — Information alert spec: 529px, #EAF4FD, 6px radius, 16/600 #0EA5E9 title,
      14/400 rgba(0,0,0,.56) message, 20px icon, 24px close, 34px pill actions (secondary first), top 22px. */
@@ -439,9 +454,11 @@
   .toast { position: fixed; left: 50%; bottom: 28px; z-index: 95; transform: translate(-50%, 10px); background: #0f172a; color: #fff; font-size: 10.8px; padding: 8px 13px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
-  @media (max-width: 1100px) {
-    .fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .fstack { width: 100%; }
+  @media (max-width: 900px) {
+    .fgrid { grid-template-columns: minmax(0, 1fr); }
+    .reason-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #f-other-reason { width: 100%; }
+    .tabs { flex-wrap: wrap; }
     .card { overflow-x: auto; }
     .card table { min-width: 720px; }
   }
@@ -722,12 +739,13 @@
 
 <section class="imm" id="imm" role="dialog" aria-modal="true" aria-labelledby="imm-title">
   <header class="imm__head">
-    <h2 class="imm__title" id="imm-title">Immunization</h2>
+    <span class="imm__avatar" aria-hidden="true">CR</span>
+    <h2 class="imm__title" id="imm-title">Immunization - COTTELL ROSAS, K</h2>
+    <span class="hpill">DOB 08/11/2026</span>
     <button class="imm__x" type="button" data-close aria-label="Close">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
     </button>
   </header>
-
 
   <div class="imm__body" id="imm-body">
     <div class="imm__content">
@@ -759,6 +777,7 @@
 
       <!-- Administer New -->
       <section class="mode-panel" id="panel-new">
+        <div class="sec-row"><h4 class="sec-head">Vaccine Details</h4></div>
         <div class="fgrid">
           <div class="vac-slot"></div>
           <div class="fld">
@@ -769,57 +788,67 @@
               <div class="cpt-list" id="cpt-list" role="listbox"></div>
             </div>
           </div>
-          <div class="fld">
-            <label for="f-cvx">CVX</label>
-            <div class="ctl"><input class="inp" id="f-cvx"></div>
+          <div class="pair">
+            <div class="fld">
+              <label for="f-cvx">CVX</label>
+              <div class="ctl"><input class="inp" id="f-cvx"></div>
+            </div>
+            <div class="fld">
+              <label for="f-mvx">MVX</label>
+              <div class="ctl"><input class="inp" id="f-mvx" placeholder="Manufacturer code(s)"></div>
+            </div>
           </div>
           <div class="fld" data-required>
             <label for="f-route">Route<span class="req">*</span></label>
             <div class="ctl"><select class="sel empty" id="f-route"><option value="">Select</option><option>Intramuscular</option><option>Subcutaneous</option><option>Intradermal</option><option>Intramuscular / Subcutaneous</option><option>Intranasal</option><option>Oral</option><option>Percutaneous</option></select><span class="ico chev"></span></div>
             <div class="err">Route is required</div>
           </div>
-          <div class="fld">
-            <label for="f-mvx">MVX</label>
-            <div class="ctl"><input class="inp" id="f-mvx" placeholder="Manufacturer code(s)"></div>
-          </div>
-          <div class="fld">
-            <label for="f-brand">Brand</label>
-            <div class="ctl"><input class="inp" id="f-brand" placeholder="Vaccine brand"></div>
+          <div class="pair">
+            <div class="fld">
+              <label for="f-brand">Brand</label>
+              <div class="ctl"><input class="inp" id="f-brand" placeholder="Vaccine brand"></div>
+            </div>
+            <div class="fld">
+              <label for="f-lot">Lot #</label>
+              <div class="ctl"><input class="inp" id="f-lot"></div>
+            </div>
           </div>
           <div class="fld">
             <label for="f-site">Body Site</label>
             <div class="ctl"><select class="sel empty" id="f-site"><option value="">Select</option><option>Muscle</option><option>Skin</option><option>Muscle and Skin</option><option>Left Deltoid</option><option>Right Deltoid</option><option>Left Upper Arm</option><option>Right Upper Arm</option><option>Left Thigh</option><option>Right Thigh</option><option>Left Gluteus Medius</option><option>Right Gluteus Medius</option><option>Nasal</option><option>Oral</option></select><span class="ico chev"></span></div>
           </div>
-          <div class="fld">
-            <label for="f-lot">Lot #</label>
-            <div class="ctl"><input class="inp" id="f-lot"></div>
-          </div>
         </div>
 
-        <div class="more">
-          <button class="more-btn" type="button" id="more-btn" aria-expanded="true" aria-controls="imm-extra" title="Hide additional details" aria-label="Hide additional details">
+        <div class="sec-row later">
+          <h4 class="sec-head">Administration Details</h4>
+          <button class="sec-toggle" type="button" id="more-btn" aria-expanded="true" aria-controls="imm-extra">
+            <span id="more-label">Hide</span>
             <svg width="10" height="7" viewBox="0 0 12 8" fill="none"><path d="M1.5 1.5 6 6l4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
 
         <div class="fgrid extra" id="imm-extra">
-          <div class="fld">
-            <label for="f-manufacturer">Manufacturer</label>
-            <div class="ctl"><select class="sel empty" id="f-manufacturer"><option value="">Select</option><option>GlaxoSmithKline</option><option>Merck &amp; Co.</option><option>Pfizer</option><option>Sanofi Pasteur</option><option>Seqirus</option><option>Moderna</option></select><span class="ico chev"></span></div>
+          <div class="pair">
+            <div class="fld">
+              <label for="f-manufacturer">Manufacturer</label>
+              <div class="ctl"><select class="sel empty" id="f-manufacturer"><option value="">Select</option><option>GlaxoSmithKline</option><option>Merck &amp; Co.</option><option>Pfizer</option><option>Sanofi Pasteur</option><option>Seqirus</option><option>Moderna</option></select><span class="ico chev"></span></div>
+            </div>
+            <div class="fld">
+              <label for="f-trade">Trade Name</label>
+              <div class="ctl"><input class="inp" id="f-trade"></div>
+            </div>
+          </div>
+          <div class="pair">
+            <div class="fld">
+              <label for="f-dose">Dose (ml)</label>
+              <div class="ctl"><input class="inp" id="f-dose" inputmode="decimal"></div>
+            </div>
+            <div class="fld">
+              <label for="f-action">Action Code</label>
+              <div class="ctl"><select class="sel" id="f-action"><option selected>Add</option><option>Update</option><option>Delete</option></select><span class="ico chev"></span></div>
+            </div>
           </div>
           <div class="fld">
-            <label for="f-trade">Trade Name</label>
-            <div class="ctl"><input class="inp" id="f-trade"></div>
-          </div>
-          <div class="fld">
-            <label for="f-dose">Dose (ml)</label>
-            <div class="ctl"><input class="inp" id="f-dose" inputmode="decimal"></div>
-          </div>
-          <div class="fld">
-            <label for="f-action">Action Code</label>
-            <div class="ctl"><select class="sel" id="f-action"><option selected>Add</option><option>Update</option><option>Delete</option></select><span class="ico chev"></span></div>
-          </div>
-          <div class="fld span-2">
             <label for="f-ndc">NDC</label>
             <div class="ndc">
               <div class="ctl"><select class="sel empty" id="f-ndc"><option value="">Select</option></select><span class="ico chev"></span></div>
@@ -827,35 +856,39 @@
             </div>
           </div>
           <div class="fld">
-            <label for="f-expiration">Expiration Date</label>
-            <div class="ctl with-ico date"><input class="inp" id="f-expiration" placeholder="MM/DD/YYYY"></div>
-          </div>
-          <div class="fld">
             <label for="f-provider">Provider</label>
             <div class="ctl"><select class="sel" id="f-provider"><option selected>GHAFOOR, ABDUL</option><option>WILLIAMS, ROBERT</option><option>WILSON, NURSE</option></select><span class="ico chev"></span></div>
           </div>
-          <div class="fld" data-required>
-            <label for="f-vis-version">VIS Version Date<span class="req">*</span></label>
-            <div class="ctl with-ico date"><input class="inp" id="f-vis-version" placeholder="MM/DD/YYYY"></div>
-            <div class="err">VIS Version Date is required</div>
+          <div class="pair">
+            <div class="fld" data-required>
+              <label for="f-vis-version">VIS Version Date<span class="req">*</span></label>
+              <div class="ctl with-ico date"><input class="inp" id="f-vis-version" placeholder="MM/DD/YYYY"></div>
+              <div class="err">VIS Version Date is required</div>
+            </div>
+            <div class="fld">
+              <label for="f-vis-issued">VIS Issued Date</label>
+              <div class="ctl with-ico date"><input class="inp" id="f-vis-issued" placeholder="MM/DD/YYYY"></div>
+            </div>
           </div>
-          <div class="fld">
-            <label for="f-vis-issued">VIS Issued Date</label>
-            <div class="ctl with-ico date"><input class="inp" id="f-vis-issued" placeholder="MM/DD/YYYY"></div>
-          </div>
-          <div class="fld">
-            <label for="f-date-admin">Date Administered</label>
-            <div class="ctl with-ico date"><input class="inp" id="f-date-admin" placeholder="MM/DD/YYYY"></div>
+          <div class="pair">
+            <div class="fld">
+              <label for="f-date-admin">Date Administered</label>
+              <div class="ctl with-ico date"><input class="inp" id="f-date-admin" placeholder="MM/DD/YYYY"></div>
+            </div>
+            <div class="fld">
+              <label for="f-expiration">Expiration Date</label>
+              <div class="ctl with-ico date"><input class="inp" id="f-expiration" placeholder="MM/DD/YYYY"></div>
+            </div>
           </div>
           <div class="fld">
             <label for="f-financial">Financial Class</label>
             <div class="ctl"><select class="sel empty" id="f-financial"><option value="">Select</option><option>Not VFC eligible</option><option>VFC eligible — Medicaid/Medicaid managed care</option><option>VFC eligible — Uninsured</option><option>VFC eligible — American Indian/Alaska Native</option><option>VFC eligible — Underinsured</option><option>Local-specific eligibility</option></select><span class="ico chev"></span></div>
           </div>
-          <div class="fld span-2">
+          <div class="fld">
             <label for="f-evidence">Evidence of Immunity</label>
             <div class="ctl"><select class="sel empty" id="f-evidence"><option value="">Select</option><option>History of disease — physician diagnosed</option><option>Laboratory evidence of immunity</option><option>Birth before 1957</option><option>Documented vaccination</option></select><span class="ico chev"></span></div>
           </div>
-          <div class="fld span-2">
+          <div class="fld">
             <label for="f-admin-notes">Administration Notes</label>
             <div class="ctl"><select class="sel empty" id="f-admin-notes"><option value="">Select</option><option>New immunization record</option><option>Historical — source unspecified</option><option>Historical — from other provider</option><option>Historical — from parent's written record</option><option>Historical — from parent's recall</option><option>Historical — from school record</option><option>Historical — from public agency</option></select><span class="ico chev"></span></div>
           </div>
@@ -865,7 +898,8 @@
 
       <!-- Add Historical -->
       <section class="mode-panel" id="panel-historical" hidden>
-        <div class="fstack">
+        <div class="sec-row"><h4 class="sec-head">Historical Immunization</h4></div>
+        <div class="fgrid">
           <div class="vac-slot"></div>
           <div class="fld" data-required>
             <label for="f-hist-date">Date Administered<span class="req">*</span></label>
@@ -877,20 +911,21 @@
             <div class="ctl"><select class="sel empty" id="f-source"><option value="">Select</option><option>Birth Certificate</option><option>New Immunization Administered (by Sending Organization)</option><option>Other Provider</option><option>Other Registry</option><option>Parent Recall</option><option>Parent Written Record</option><option>Public Agency</option><option>School Record</option><option>Source Unspecified</option></select><span class="ico chev"></span></div>
             <div class="err">Source of Information is required</div>
           </div>
-          <div class="comments-slot"></div>
+          <div class="comments-slot span-all"></div>
         </div>
       </section>
 
       <!-- Not Administered -->
       <section class="mode-panel" id="panel-not-administered" hidden>
-        <div class="fstack">
+        <div class="sec-row"><h4 class="sec-head">Refusal Details</h4></div>
+        <div class="fgrid">
           <div class="vac-slot"></div>
           <div class="fld" data-required>
             <label for="f-date-refused">Date Refused<span class="req">*</span></label>
             <div class="ctl with-ico date"><input class="inp" id="f-date-refused" placeholder="MM/DD/YYYY"></div>
             <div class="err">Date Refused is required</div>
           </div>
-          <div class="fld">
+          <div class="fld span-all">
             <span class="lbl">Reason for Non-Administration<span class="req">*</span></span>
             <div class="reason-options" role="radiogroup" aria-label="Reason for non-administration">
               <label><input type="radio" name="reason" value="Documented immunity/Titer">Documented immunity/Titer</label>
@@ -904,16 +939,19 @@
             </div>
             <input class="inp" id="f-other-reason" placeholder="Describe the other reason" disabled aria-label="Other reason">
           </div>
-          <div class="comments-slot"></div>
+          <div class="comments-slot span-all"></div>
         </div>
       </section>
 
       <!-- Add Schedule -->
       <section class="mode-panel" id="panel-schedule" hidden>
-        <div class="fld" data-required>
-          <label for="f-schedule-set">Immunization Set<span class="req">*</span></label>
-          <div class="ctl"><select class="sel empty" id="f-schedule-set"><option value="">Select</option><option>0-5 YEARS(PEDIARIX TRACK)</option><option>0-5 YEARS(PENTACEL TRACK)</option><option>10-18 YEARS</option><option>ADULT IMMUNIZATION SCHEDULE</option><option>MMA IMMUNIZATION SCHEDULE</option></select><span class="ico chev"></span></div>
-          <div class="err">Immunization Set is required</div>
+        <div class="sec-row"><h4 class="sec-head">Immunization Schedule</h4></div>
+        <div class="fgrid">
+          <div class="fld" data-required>
+            <label for="f-schedule-set">Immunization Set<span class="req">*</span></label>
+            <div class="ctl"><select class="sel empty" id="f-schedule-set"><option value="">Select</option><option>0-5 YEARS(PEDIARIX TRACK)</option><option>0-5 YEARS(PENTACEL TRACK)</option><option>10-18 YEARS</option><option>ADULT IMMUNIZATION SCHEDULE</option><option>MMA IMMUNIZATION SCHEDULE</option></select><span class="ico chev"></span></div>
+            <div class="err">Immunization Set is required</div>
+          </div>
         </div>
       </section>
     </form>
@@ -924,13 +962,19 @@
           <button class="tab" role="tab" aria-selected="true" aria-controls="p-scheduled" id="t-scheduled" type="button">Scheduled Immunizations</button>
           <button class="tab" role="tab" aria-selected="false" aria-controls="p-history" id="t-history" type="button">Immunization History</button>
         </div>
-        <div class="tab-tools" data-tools="scheduled">
-          <button class="btn btn--tint btn--sm" type="button" data-act="apply">Apply</button>
-          <button class="btn btn--tint btn--sm" type="button" data-act="delete">Delete</button>
-        </div>
-        <div class="tab-tools" data-tools="history" hidden>
-          <button class="btn btn--tint btn--sm" type="button" data-act="audit">Audit</button>
-          <button class="btn btn--tint btn--sm" type="button" data-act="delete">Delete</button>
+        <div class="card-tools">
+          <label class="mini-search">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="2"/><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <input type="search" id="rec-search" placeholder="Search..." aria-label="Search immunizations">
+          </label>
+          <div class="tab-tools" data-tools="scheduled">
+            <button class="btn btn--tint" type="button" data-act="apply">Apply</button>
+            <button class="btn btn--tint" type="button" data-act="delete">Delete</button>
+          </div>
+          <div class="tab-tools" data-tools="history" hidden>
+            <button class="btn btn--tint" type="button" data-act="audit">Audit</button>
+            <button class="btn btn--tint" type="button" data-act="delete">Delete</button>
+          </div>
         </div>
       </div>
       <div class="panel" id="p-scheduled" role="tabpanel" aria-labelledby="t-scheduled">
@@ -947,13 +991,14 @@
           <tbody id="b-history"></tbody>
         </table>
       </div>
+      <div class="card-foot"><span id="rec-count">Showing 0 of 0 results</span></div>
     </div>
     </div>
   </div>
 
   <footer class="imm__foot">
-    <span class="imm__foot-note"><span class="req">*</span>Required fields</span>
     <div class="imm__actions">
+      <button class="btn btn--ghost" type="button" data-close>Close</button>
       <button class="btn btn--ghost" type="button" data-act="add">Add Immunization</button>
       <button class="btn btn--primary" type="button" data-act="add-close">Add &amp; Close</button>
     </div>
@@ -1010,7 +1055,8 @@
   function setExtraOpen(open) {
     extraInfo.hidden = !open;
     moreBtn.setAttribute('aria-expanded', String(open));
-    moreBtn.title = moreBtn.ariaLabel = open ? 'Hide additional details' : 'Show additional details';
+    moreBtn.title = moreBtn.ariaLabel = open ? 'Hide administration details' : 'Show administration details';
+    $('#more-label').textContent = open ? 'Hide' : 'Show';
   }
   moreBtn.addEventListener('click', function () { setExtraOpen(extraInfo.hidden); });
   var imm = $('#imm'), scrim = $('#scrim'), body = $('#imm-body'), form = $('#imm-form');
@@ -1203,15 +1249,26 @@
   }
 
   // ── Records table ─────────────────────────────────────────────────
+  var COLS = {
+    scheduled: ['name', 'due', 'schedule', 'vis', 'fc', 'comments', 'by', 'entry'],
+    history: ['name', 'administered', 'vis', 'fc', 'comments', 'reason', 'by', 'entry']
+  };
+  var EMPTY = { scheduled: 'No scheduled immunizations recorded', history: 'No past immunizations recorded' };
+  var query = '';
   function render() {
-    var s = $('#b-scheduled'), h = $('#b-history');
-    s.innerHTML = records.scheduled.length ? records.scheduled.map(function (r, i) {
-      return '<tr class="row' + (selected && selected.tab === 'scheduled' && selected.i === i ? ' sel' : '') + '" data-tab="scheduled" data-i="' + i + '"><td>' + esc(r.name) + '</td><td>' + esc(r.due) + '</td><td>' + esc(r.schedule) + '</td><td>' + esc(r.vis) + '</td><td>' + esc(r.fc) + '</td><td>' + esc(r.comments) + '</td><td>' + esc(r.by) + '</td><td>' + esc(r.entry) + '</td></tr>';
-    }).join('') : emptyRow('No scheduled immunizations recorded');
-    h.innerHTML = records.history.length ? records.history.map(function (r, i) {
-      return '<tr class="row' + (selected && selected.tab === 'history' && selected.i === i ? ' sel' : '') + '" data-tab="history" data-i="' + i + '"><td>' + esc(r.name) + '</td><td>' + esc(r.administered) + '</td><td>' + esc(r.vis) + '</td><td>' + esc(r.fc) + '</td><td>' + esc(r.comments) + '</td><td>' + esc(r.reason) + '</td><td>' + esc(r.by) + '</td><td>' + esc(r.entry) + '</td></tr>';
-    }).join('') : emptyRow('No past immunizations recorded');
+    ['scheduled', 'history'].forEach(function (tab) {
+      var rows = records[tab].map(function (r, i) { return { r: r, i: i }; }).filter(function (x) {
+        return !query || x.r.name.toLowerCase().indexOf(query) > -1;
+      });
+      $('#b-' + tab).innerHTML = rows.length ? rows.map(function (x) {
+        var sel = selected && selected.tab === tab && selected.i === x.i ? ' sel' : '';
+        return '<tr class="row' + sel + '" data-tab="' + tab + '" data-i="' + x.i + '">' +
+          COLS[tab].map(function (k) { return '<td title="' + esc(x.r[k]) + '">' + esc(x.r[k]) + '</td>'; }).join('') + '</tr>';
+      }).join('') : emptyRow(query && records[tab].length ? 'No immunizations match “' + query + '”' : EMPTY[tab]);
+      if (tab === activeTab) $('#rec-count').textContent = 'Showing ' + rows.length + ' of ' + records[tab].length + ' results';
+    });
   }
+  $('#rec-search').addEventListener('input', function (e) { query = e.target.value.trim().toLowerCase(); selected = null; render(); });
   function emptyRow(msg) {
     return '<tr class="empty-row"><td colspan="8"><span class="empty"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="currentColor"/><rect x="7.1" y="7" width="1.8" height="5" rx=".9" fill="#fff"/><circle cx="8" cy="4.6" r="1.05" fill="#fff"/></svg>' + esc(msg) + '</span></td></tr>';
   }
